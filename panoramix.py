@@ -112,6 +112,67 @@ addr_shortcuts = {
 
 def decompile(this_addr, only_func_name=None):
 
+    '''
+
+        But the main decompilation process looks like this:
+
+            loader = Loader()
+            loader.load(this_addr)
+
+        loader.lines contains disassembled lines now
+
+            loader.run(VM(loader, just_fdests=True))
+
+        After this, loader.func_list contains a list of functions and their locations in the contract.
+        Passing VM here is a pretty ugly hack, sorry about it.
+
+            trace = VM(loader).run(target)
+
+        Trace now contains the decompiled code, starting from target location.
+        you can do pprint_repr or pprint_logic to see how it looks
+
+            trace = make_whiles(trace)
+
+        This turns gotos into whiles
+        then it simplifies the code.
+        (should be two functions really)
+
+            functions[hash] = Function(hash, trace)
+
+        Turns trace into a Function class.
+        Function class constructor figures out it's kind (e.g. read-only, getter, etc),
+        and some other things.
+
+            contract = Contract(addr=this_addr, 
+                                network=loader.network, 
+                                ver=VER,
+                                problems=problems,
+                                functions=functions)
+
+        Contract is a class containing all the contract decompiled functions and some other data.
+
+            contract.postprocess()
+
+        Figures out storage structure (you have to do it for the whole contract at once, not function by function)
+        And folds the trace (that is, changes series of ifs into simpler forms)
+        
+        Finally...
+
+            loader.disasm() -- contains disassembled version
+            contract.json() -- contains json version of the contract
+
+        Decompiled, human-readable version of the contract is done within this .py file, 
+        starting from `with redirect_stdout...`
+
+
+        To anyone going into this code:
+            - yes, it is chaotic
+            - yes, there are way too many interdependencies between some modules
+            - this is the first decompiler I've written in my life :)
+
+    '''
+
+
     if '--fast' not in sys.argv:
         from web3 import Web3  # web3 adds 0.5s to execution time
         this_addr = Web3.toChecksumAddress(this_addr)
@@ -125,7 +186,6 @@ def decompile(this_addr, only_func_name=None):
 
     loader = Loader()
     loader.load(this_addr)
-
     loader.run(VM(loader, just_fdests=True))
 
     if len(loader.lines) == 0:
@@ -178,7 +238,7 @@ def decompile(this_addr, only_func_name=None):
                 assert loader.lines[target][1] == 'jumpdest', loader.lines[target]
                 target += 1
 
-            @timeout_decorator.timeout(180, use_signals=True)
+            @timeout_decorator.timeout(30, use_signals=True) # 180 used in production
             def dec():
                 trace = VM(loader).run(target)
                 trace = make_whiles(trace)
@@ -419,7 +479,7 @@ else:
 
     elif this_addr.lower() == 'random':
         from various import random_addresses
-        this_addr = random_addresses[random.randint(0, len(random_adddresses))]
+        this_addr = random_addresses[random.randint(0, len(random_addresses))]
 
     if len(sys.argv) > 2:
         if not sys.argv[2].startswith('--'):

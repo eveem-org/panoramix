@@ -17,7 +17,6 @@ from copy import deepcopy
 
 from utils.signatures import get_func_name, set_func, get_abi_name, get_func_params, set_func_params_if_none
 
-import pano.folder
 from core.masks import mask_to_type, type_to_mask
 
 import json
