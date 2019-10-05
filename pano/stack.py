@@ -12,7 +12,22 @@ from pano.prettify import prettify
 
 logger = logging.getLogger(__name__)
 
+'''
+    
+    Symbolic stack module, used by vm.py.
+
+'''
+
+
 def fold_stacks(self, latter, depth):
+    '''
+
+        When a loop is discovered, this function takes the stack from the beginningg
+        of the loop, and from the end of the loop, and tries to figure out the loop variables.
+
+        It then returns a stack that has variables in it instead of values.
+
+    '''
     assert len(self) == len(latter), (self, latter)
     vars = []
 

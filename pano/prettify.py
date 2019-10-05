@@ -26,6 +26,17 @@ from pano.loader import Loader
 
 logger = logging.getLogger(__name__)
 
+'''
+
+    This module displays expressions and traces in a human readable form.
+
+    It went through very many iterations, so it's a mess by now.
+
+    A lot of it can be easily refactored, so if you're looking for a place to contribute,
+    this may be it :)
+
+'''
+
 
 def make_ast(trace):
     def store_to_set(line):

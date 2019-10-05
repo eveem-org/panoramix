@@ -12,15 +12,23 @@ logger = logging.getLogger(__name__)
 
 '''
 
-    Folder_aux is a set of additional rules for a last-minute folding,
-    after everything else is done.
+    Folder takes takes all the execution paths, and merges them into
+    one, as concise as possible.
 
-    Done especially with
-    0xd883209C4DCd497f24633C627a4E451013424841 , sendFoods
-    in mind.
+    In other words - it turns intermediate representation available
+    through API/.json, that is easy to parse by machine, and turns
+    it into a representation that is easy to read by humans, and
+    a much shorter one.
 
+
+    This (and the vm.py/loops) algorithm is one of the two most difficult
+    ones within the decompiler.
+
+    While the code can be cleaned up and refactored, I'm not sure the algorithm
+    could be much simpler.
 
 '''
+
 
 
 def fold(trace):
@@ -29,16 +37,53 @@ def fold(trace):
         as_paths unfolds the trace into a list of branchless paths that the contract can
         possibly take. 'if's are converted into condition assertions, e.g.
 
-        [x,y,z,(if, cond, [a,b,c...,q,w,e], [d,e,f..,q,w,e] )]
+        [x,
+         y,
+         z,
+         (if, cond, 
+                [a,
+                 b,
+                 c,
+                 ...,
+                 q,
+                 w,
+                 e]
+               , 
+                 [d,
+                  e,
+                  f,
+                  ...,
+                  q,
+                  w,
+                  e])]
 
         gets turned into
 
         [
-            [x,y,z,cond,a,b,c...,q,w,e],
-            [x,y,z,is_zero(cond),d,e,f...,q,w,e]
+            [x,
+             y,
+             z,
+             cond,
+             a,
+             b,
+             c,
+             ...,
+             q,
+             w,
+             e],
+
+             [x,
+              y,
+              z,
+              is_zero(cond),
+              d,
+              e,
+              f,
+              ...,
+              q,
+              w,
+              e]
         ]
-
-
     '''
 
     try:
@@ -82,7 +127,6 @@ def fold(trace):
 
 def make_fands(exp):
     # see `ferlan.getOrderDataClaim` for why it's necessary
-#    raise
     if exp ~ ('or', *terms):
         return ('for', ) + terms
     elif exp ~ ('and', *terms):
@@ -126,6 +170,20 @@ def as_paths(trace, path = None):
 
 
     return (list(path), )
+
+
+
+'''
+
+    Folder_aux is a set of additional rules for a last-minute folding,
+    after everything else is done.
+
+    Done especially with
+    0xd883209C4DCd497f24633C627a4E451013424841 , sendFoods
+    in mind.
+
+
+'''
 
 TERMINATING = ('return', 'stop', 'selfdestruct', 'invalid', 'assert_fail', 'revert', 'continue', 'undefined')
 
@@ -191,21 +249,6 @@ def fold_aux(trace):
 
     return out
 
-
-'''
-
-    Folder (proper) takes takes all the execution paths, and merges them into
-    one, as concise as possible.
-
-    In other words - it turns intermediate representation available
-    through API/.json, that is easy to parse by machine, and turns
-    it into a representation that is easy to read by humans, and
-    a much shorter one.
-
-    There is probably a neater way of doing this, but this should do for
-    the time being...
-
-'''
 
 '''
 

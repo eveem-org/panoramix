@@ -186,7 +186,6 @@ def max_to_add(exp):
 
     for e in exp:
         if type(e) == int:
-#            print(exp)
             m = min(x if type(x) == int else (x[1] if type(x) == tuple and len(x)>1 and type(x[1]) == int else 0) for x in exp)
                                                 # used to be x[1] but 0x0000136DAE58AFCF1EDd2071973d4a7a6fbe98A5 didn't work
             res = ('max', e - m)

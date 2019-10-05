@@ -35,6 +35,53 @@ logger = logging.getLogger(__name__)
 logger.level = logging.CRITICAL # switch to INFO for detailed
 
 
+'''
+
+    Simplifier engine.
+
+    It takes the trace, and performs rewrites in the following loop:
+        - simplify expressions
+        - inline and cleanup variables (when possible)
+        - inline and cleanup memory (when possible)
+        - split setmems
+        - split storage writes into separate lines
+        - replace msize with actual values if possible
+        - if there are any obvious always-fulfilled conditions, remove them
+        - look for loops that are really setmems and clean those too
+        - for loops that access storage, rewrite them so they are easier to parse by storage parser
+
+    Finally, after all the processing is done:
+    - replace `max(2+x, 3+y)` with `2 + max(x, 1+y)` - more human-readable, but would cause problems in the loop
+    - do some other stuff that is human readable but would make the processing in the loop difficult
+
+
+    If you want to see the engine in all it's glory, try:
+        panoramix.py kitties tokenMetadata
+
+    If you want to figure out exactly what happens, pprint_trace(trace) and pprint_repr(trace)
+    are your friend. Put them in various places in simplify_trace and and see how the code changes.
+
+'''
+
+'''
+
+    Pro tips:
+
+        - rules in simplifier are quite independent. you can disable and move around a lot of the stuff
+          and still maintain the mathematical correctedness of the output
+
+        - the worst that will happen is that some edge cases in some contracts won't get simplified, but they
+          will still be correct
+
+        - bulk_compare.py is your friend for testing your changes. in Eveem I use something like it for initial
+          tests and then do a huge integration comparison before each release, checking thousands of contracts for
+          changes
+
+        - if you like this approach, be sure to check out the work of people from Kestrel Institute, and their use
+          of ACL2. They built a decompiler with a similar structure, but with simplification rules formally proven(!).
+
+'''
+
 def simplify_trace(trace):
 
     old_trace = None
@@ -45,6 +92,11 @@ def simplify_trace(trace):
             break
 
         old_trace = trace
+
+        # fun fact:
+        # you can do prettify.pprint_trace(trace) or prettify.pprint_repr(trace)
+        # between every stage here to see changes that happen to the code.
+
         trace = replace_f(trace, simplify_exp)
         trace = cleanup_vars(trace)
         trace = cleanup_mems(trace)
@@ -58,6 +110,11 @@ def simplify_trace(trace):
         trace = cleanup_conds(trace)
         trace = rewrite_trace(trace, loop_to_setmem)
         trace = propagate_storage_in_loops(trace)
+
+        # there is a logic to this ordering, but it would take a long
+        # time to explain. if you play with it, just run through bulk_compare.py
+        # and see how it affects the code.
+
     
     # final lightweight postprocessing
     # introduces new variables, simplifies code for human readability
@@ -524,6 +581,8 @@ def readability(trace):
 
 
 def replace_bytes_or_string_length(trace):
+    # see unicorn contract, version/name
+
     def replace(expr):
         key = None
         expr ~ ('mask_shl', :size, :offset, -1, ('and', ('storage', _, 0, :key), ('add', -1, ('mask_shl', _, _, _, ('iszero', ('storage', _, 0, :key2))))))
@@ -543,7 +602,6 @@ def replace_bytes_or_string_length(trace):
 
 
 def loop_to_setmem(line):
-
     if line ~ ('while', ...):
         r = _loop_to_setmem(line)
 

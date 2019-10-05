@@ -23,6 +23,24 @@ loader_dests = None
 logger = logging.getLogger(__name__)
 
 
+'''
+
+    A symbolic EVM.
+
+    It executes the contract, and returns the resulting `trace` of execution - which is the decompiled form.
+
+
+    The most difficult part of this module is the loop detection and simplification algorithm.
+    In over 10 iterations I didn't find a simpler way that is just as effective.
+
+    Unfortunately, because of the complexity, I don't fully understand how it works. 
+    Ergo, I cannot explain it to you :) Good luck!
+
+    On the upside, some stuff, like apply_stack is quite straightforward.
+
+'''
+
+
 def mem_load(pos, size=32):
     return ('mem', ('range', pos, size))
 
@@ -201,7 +219,10 @@ class VM(EasyCopy):
         '''
             
             BFS symbolic execution, ends up with a decompiled
-            code, with labels and gotos
+            code, with labels and gotos.
+
+            Depth-first would be way easier to implement, but it tends
+            to work way slower because of the loops.
 
         '''
 
