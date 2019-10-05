@@ -1,0 +1,12 @@
+secret.py
+__pycache__
+*/__pycache__
+cache_code
+cache_pabi
+cache_pan
+cache
+cache_pan
+.DS_Store
+supplement.db
+supp2.db
+cache_*
