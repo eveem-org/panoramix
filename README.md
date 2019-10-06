@@ -79,3 +79,7 @@ Believe me, I spent a lot of time looking for some other way to make pattern mat
 Nothing was close to this good.
 
 But if you manage to figure out a way to do it without Tilde (and maintain readability), I'll gladly accept a PR :)
+
+# How Panoramix works
+
+See the source code comments, starting with panoramix.py. Also, those slides.
