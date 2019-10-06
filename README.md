@@ -1,7 +1,7 @@
 ## Installation:
 
 ```
-git pull ....
+git clone https://github.com/eveem-org/panoramix.git
 pip3 install -r requirements.txt
 ```
 
@@ -18,10 +18,15 @@ e.g.
 ```
 python3.8 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d
 ```
+or
+```
+python3.8 panoramix.py kitties
+```
+
 
 Output goes to two places:
-- console
-- cache_pan/ directory - .pan, .json, .asm files
+- `console`
+- ***`cache_pan/`*** directory - .pan, .json, .asm files
 
 ### Optional parameters:
 
