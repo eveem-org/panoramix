@@ -7,7 +7,7 @@ import collections
 
 from core.memloc import range_overlaps, splits_mem, fill_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store
 
-from utils.helpers import rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
+from utils.helpers import C, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
 from utils.helpers import contains, find_f_set, find_f_list, rewrite_trace, rewrite_trace_full, replace, replace_f, replace_f_stop, rewrite_trace_ifs
 
 from core.algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add, divisible_bytes, _max_op, div_op
@@ -25,7 +25,7 @@ from core.masks import get_bit
 
 from core.masks import to_mask, to_neg_mask
 
-from pano.prettify import pretty_repr
+from pano.prettify import pretty_repr, explain
 
 from pano.simplify import simplify_trace
 
@@ -42,9 +42,9 @@ logger.level = logging.CRITICAL # switch to INFO for detailed
 
 def make_whiles(trace): 
 
-    logger.info('making')
     trace = make(trace)
-    logger.info('cleaning up jumpdests')
+
+    explain('Loops -> whiles', trace)
 
     # clean up jumpdests
     trace = rewrite_trace(trace, lambda line: [] if line ~ ('jumpdest', ...) else [line])

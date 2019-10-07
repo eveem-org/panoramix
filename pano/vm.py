@@ -15,7 +15,7 @@ from core.arithmetic import is_zero, simplify_bool
 
 from pano.prettify import pprint_trace
 
-from utils.helpers import precompiled, precompiled_var_names
+from utils.helpers import precompiled, precompiled_var_names, C
 
 import sys
 
@@ -212,7 +212,6 @@ class VM(EasyCopy):
         func_node = Node(vm=self, start=start, safe=True, stack=[])
         trace = [('setmem', ('range', 0x40, 32), 0x60), ('jump', func_node, 'safe', tuple())]
 
-
         root = Node(vm=self, trace=trace, start=start, safe=True, stack=[])
         func_node.set_prev(root)
 
@@ -367,6 +366,12 @@ class VM(EasyCopy):
         i, op = line[0], line[1]
         stack = self.stack
 
+        if '--explain' in sys.argv and op in ('jump', 'jumpi', 'selfdestruct', 'stop', 'return', 'invalid', 'assert_fail', 'revert'):
+            trace.append(C.asm(f'       {stack}'))
+            trace.append('')
+            trace.append(f'[{line[0]}] {C.asm(op)}')
+
+
         if op == 'jump':
             target = stack.pop()
 
@@ -451,18 +456,19 @@ class VM(EasyCopy):
 
         previous_len = stack.len()
 
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            trace(str(stack))
+        if '--verbose' in sys.argv or '--explain' in sys.argv:
+            trace(C.asm('       '+str(stack)))
+            trace('')
 
             if "push" not in op and "dup" not in op and "swap" not in op:
-                trace('[{}] {}',line[0],op)
+                trace('[{}] {}',line[0],C.asm(op))
             else:
                 if type(line[2]) == str:
-                    trace('[{}] {} {}',line[0],op," ”"+line[2]+"”")
+                    trace('[{}] {} {}',line[0],C.asm(op),C.asm(" ”"+line[2]+"”"))
                 elif line[2] > 0x1000000000:
-                    trace('[{}] {} {}',line[0],op,hex(line[2]))
+                    trace('[{}] {} {}',line[0],C.asm(op),C.asm(hex(line[2])))
                 else:                
-                    trace('[{}] {} {}',line[0],op,str(line[2]))
+                    trace('[{}] {} {}',line[0],C.asm(op),C.asm(str(line[2])))
 
         assert op not in ['jump', 'jumpi', 'revert', 'return', 'stop', 'jumpdest']
 

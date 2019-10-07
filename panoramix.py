@@ -21,6 +21,10 @@ from contextlib import redirect_stdout
 import random
 import traceback
 
+import pano.folder as folder
+
+from utils.helpers import rewrite_trace
+
 import coloredlogs
 import logging
 
@@ -55,7 +59,7 @@ from pano.whiles import make_whiles
 from pano.function import Function
 from pano.vm import VM
 from pano.contract import Contract
-from pano.prettify import pprint_trace, pretty_type, pprint_repr
+from pano.prettify import pprint_trace, pretty_type, pprint_repr, explain
 
 VER = '4 Oct 2019'
 
@@ -241,12 +245,25 @@ def decompile(this_addr, only_func_name=None):
             @timeout_decorator.timeout(30, use_signals=True) # 180 used in production
             def dec():
                 trace = VM(loader).run(target)
+                explain('Initial decompiled trace', trace[1:])
+
+                if '--explain' in sys.argv:
+                    trace = rewrite_trace(trace, lambda line: [] if type(line) == str else [line])
+                    explain('Without assembly', trace)
+
                 trace = make_whiles(trace)
+                explain('final', trace)
+
+                if '--explain' in sys.argv:
+                    explain('folded', folder.fold(trace))
+
+
                 return trace
 
             trace = dec()
 
             functions[hash] = Function(hash, trace)
+
 
 
         except Exception as e:
