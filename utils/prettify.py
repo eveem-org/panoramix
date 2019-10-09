@@ -26,6 +26,20 @@ from pano.loader import Loader
 
 logger = logging.getLogger(__name__)
 
+import sys
+
+prev_trace = None
+def explain(title, trace):
+    if '--explain' not in sys.argv:
+        return
+
+    if trace == prev_trace:
+        return
+
+    print('\n'+C.green_back+f" {title}: "+C.end+'\n')
+    pprint_trace(trace)
+    prev_trace = trace
+
 
 def make_ast(trace):
     def store_to_set(line):

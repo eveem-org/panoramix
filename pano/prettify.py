@@ -24,6 +24,8 @@ from functools import partial
 
 from pano.loader import Loader
 
+import sys
+
 logger = logging.getLogger(__name__)
 
 '''
@@ -37,6 +39,33 @@ logger = logging.getLogger(__name__)
 
 '''
 
+
+
+prev_trace = None
+def explain(title, trace):
+    global prev_trace
+
+    if '--explain' not in sys.argv:
+        return
+
+    if trace == prev_trace:
+        return
+
+    print('\n'+C.green_back+f" {title}: "+C.end+'\n')
+    pprint_trace(trace)
+    prev_trace = trace
+
+def explain_text(title, params):
+    global prev_trace
+    
+    if '--explain' not in sys.argv:
+        return
+
+    print('\n'+C.blue_back+f" {title}: "+C.end+'\n')
+
+    for name, val in params:
+        print(f' {C.gray}{name}{C.end}: {val}')
+    print()
 
 def make_ast(trace):
     def store_to_set(line):
@@ -485,10 +514,10 @@ def pretty_line(r, add_color=True):
             yield "       args {}".format(', '.join(fparams))
 
     elif r ~ ('label', :name, :setvars):
-        yield COLOR_GREEN + f'label {str(name)} setvars: {str(setvars)}' + ENDC
+        yield COLOR_GREEN + f'loop {str(name)} setvars: {str(setvars)}' + ENDC
 
     elif r ~ ('goto', *rest):
-        yield COLOR_GREEN + f'goto {str(rest)}'+ENDC
+        yield COLOR_GREEN + f'continue {str(rest)}'+ENDC
 
     elif r ~ ('continue', :jd, :setvars):
         for v in setvars:

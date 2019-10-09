@@ -7,7 +7,7 @@ import collections
 
 from core.memloc import range_overlaps, splits_mem, fill_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store
 
-from utils.helpers import rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
+from utils.helpers import is_array, C, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
 from utils.helpers import contains, find_f_set, find_f_list, rewrite_trace, rewrite_trace_full, replace, replace_f, replace_f_stop, rewrite_trace_ifs
 
 from core.algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add, divisible_bytes, _max_op, div_op
@@ -27,7 +27,7 @@ from core.masks import to_mask, to_neg_mask
 
 from .rewriter import postprocess_exp, postprocess_trace, rewrite_string_stores
 
-from pano.prettify import pretty_repr
+from pano.prettify import pretty_repr, explain
 
 import sys
 
@@ -98,18 +98,42 @@ def simplify_trace(trace):
         # between every stage here to see changes that happen to the code.
 
         trace = replace_f(trace, simplify_exp)
+        explain(f'simplify expressions', trace)
+
         trace = cleanup_vars(trace)
+        explain('cleanup variables', trace)
+
         trace = cleanup_mems(trace)
+        explain(f'cleanup mems', trace)
+
         trace = rewrite_trace(trace, split_setmem)
         trace = rewrite_trace_full(trace, split_store)
+        explain('split setmems & storages', trace)
+
         trace = cleanup_vars(trace)
+        explain('cleanup vars', trace)
+
         trace = replace_f(trace, simplify_exp)
+        explain(f'simplify expressions', trace)
+
         trace = cleanup_mul_1(trace)
+        explain(f'simplify expressions', trace)
+
         trace = cleanup_msize(trace)
+        explain(f'calculate msize', trace)
+
         trace = replace_bytes_or_string_length(trace)
+        explain(f'replace storage with length', trace)
+
         trace = cleanup_conds(trace)
+        explain(f'cleanup unused ifs', trace)
+
         trace = rewrite_trace(trace, loop_to_setmem)
+        explain(f'convert loops to setmems', trace)
+
         trace = propagate_storage_in_loops(trace)
+        explain('move loop indexes outside of loops', trace)
+
 
         # there is a logic to this ordering, but it would take a long
         # time to explain. if you play with it, just run through bulk_compare.py
@@ -124,14 +148,17 @@ def simplify_trace(trace):
 
     trace = replace_f(trace, postprocess_exp)
     trace = replace_f(trace, postprocess_exp)
-
     trace = rewrite_trace_ifs(trace, postprocess_trace)
 
     trace = rewrite_trace_multiline(trace, rewrite_string_stores, 3)
+    explain('using heuristics to clean up some things', trace)
+
     trace = cleanup_mems(trace)
     trace = cleanup_mems(trace)
     trace = cleanup_mems(trace)
     trace = cleanup_conds(trace)
+    explain('final setmem/condition cleanup', trace)
+
 
     def fix_storages(exp):
         if exp ~ ('storage', :size, int:off, :loc) and off < 0:
@@ -140,9 +167,12 @@ def simplify_trace(trace):
 
     trace = replace_f(trace, fix_storages)
     trace = cleanup_conds(trace)
+    explain('cleaning up storages slightly', trace)
 
-    logger.debug('readability')
+
     trace = readability(trace)
+    explain('adding nicer variable names', trace)
+
 
     trace = cleanup_mul_1(trace)
 

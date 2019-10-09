@@ -7,16 +7,18 @@ from .profiler import *
 import os
 import re
 
+
 COLOR_HEADER = '\033[95m'
 COLOR_BLUE = '\033[94m'
 COLOR_OKGREEN = '\033[92m'
 COLOR_WARNING = '\033[93m'
 FAIL = '\033[91m'
-ENDC = '\033[0m'
+ENDC = '\033[;1m'
 COLOR_BOLD = '\033[1m'
 COLOR_UNDERLINE = '\033[4m'
 COLOR_GREEN = '\033[32m'
 COLOR_GRAY = '\033[38;5;8m'
+COLOR_ASM = '\033[38;5;33m'
 
 '''
     slowly refactoring into low-caps names,
@@ -59,6 +61,7 @@ def convert(text):
 
 
 class C():
+#    asm = '\033[38;5;33m'
     header = '\033[95m'
     blue = '\033[94m'
     okgreen = '\033[92m'
@@ -71,6 +74,13 @@ class C():
     endc = '\033[0m'
     fail = '\033[91m'
     end = endc
+
+    green_back = '\033[42;1m\033[38;5;0m'
+    blue_back = '\033[43;1m\033[38;5;0m'
+
+
+    def asm(s):
+        return '\033[38;5;33m' + s + C.endc
 
     every = set([header, blue, okgreen, warning, red, bold, underline, green, gray, endc])
 

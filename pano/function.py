@@ -7,7 +7,7 @@ from utils.helpers import color, C#.header, blue, okgreen, warning, red, bold, u
 
 from utils.helpers import EasyCopy, opcode, find_f_list, find_f, replace_f
 
-from pano.prettify import prettify, pprint_logic
+from pano.prettify import prettify, pprint_logic, explain_text
 
 from core.arithmetic import simplify_bool
 
@@ -314,7 +314,11 @@ class Function(EasyCopy):
             else:
                 return []
 
+        exp_text = []
+
         self.returns = find_f_list(self.trace, find_returns)
+
+        exp_text.append(('possible return values', prettify(self.returns)))
 
         first = self.trace[0]
 
@@ -329,10 +333,14 @@ class Function(EasyCopy):
         else:
             self.payable = True
 
+        exp_text.append(('payable', self.payable))
+
         self.read_only = True
         for op in ['store', 'selfdestruct', 'call', 'delegatecall', 'codecall', 'create']:
             if f"'{op}'" in str(self.trace):
                 self.read_only = False
+
+        exp_text.append(('read_only', self.read_only))
 
 
         '''
@@ -354,6 +362,9 @@ class Function(EasyCopy):
                 self.const = self.const[2]
         else:
             self.const = None
+
+        if self.const:
+            exp_text.append(('const', self.const))
 
         '''
             getter detection
@@ -407,5 +418,10 @@ class Function(EasyCopy):
 
                 else:
                     pass
+
+        if self.getter:
+            exp_text.append((f'getter for', prettify(self.getter)))
+
+        explain_text('function traits', exp_text)
 
         return self
