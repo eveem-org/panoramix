@@ -7,7 +7,7 @@ import collections
 
 from core.memloc import range_overlaps, splits_mem, fill_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store
 
-from utils.helpers import C, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
+from utils.helpers import is_array, C, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
 from utils.helpers import contains, find_f_set, find_f_list, rewrite_trace, rewrite_trace_full, replace, replace_f, replace_f_stop, rewrite_trace_ifs
 
 from core.algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add, divisible_bytes, _max_op, div_op

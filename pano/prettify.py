@@ -514,10 +514,10 @@ def pretty_line(r, add_color=True):
             yield "       args {}".format(', '.join(fparams))
 
     elif r ~ ('label', :name, :setvars):
-        yield COLOR_GREEN + f'label {str(name)} setvars: {str(setvars)}' + ENDC
+        yield COLOR_GREEN + f'loop {str(name)} setvars: {str(setvars)}' + ENDC
 
     elif r ~ ('goto', *rest):
-        yield COLOR_GREEN + f'goto {str(rest)}'+ENDC
+        yield COLOR_GREEN + f'continue {str(rest)}'+ENDC
 
     elif r ~ ('continue', :jd, :setvars):
         for v in setvars:
