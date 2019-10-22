@@ -187,6 +187,9 @@ def fetch_db():
 '''
 
 def crawl_abis_from_cache():
+    # imports here, because this is not used as a part of a regular panoramix run,
+    # and we don't want to import stuff unnecessarily.
+
     import json
 
     import os
@@ -204,7 +207,7 @@ def crawl_abis_from_cache():
     try:
         from web3 import Web3
     except:
-        print("install web3\n\t`pip install web3`") # the only dependency in the project :D
+        print("install web3:\n\t`pip install web3`") # the only dependency in the project :D
 
     conn = sqlite3.connect('supplement.db')
     cursor = conn.cursor()
