@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
     The most difficult part of this module is the loop detection and simplification algorithm.
     In over 10 iterations I didn't find a simpler way that is just as effective.
 
-    Unfortunately, because of the complexity, I don't fully understand how it works. 
+    Unfortunately, because of the complexity, I don't fully understand how it works.
     Ergo, I cannot explain it to you :) Good luck!
 
     On the upside, some stuff, like apply_stack is quite straightforward.
@@ -216,7 +216,7 @@ class VM(EasyCopy):
         func_node.set_prev(root)
 
         '''
-            
+
             BFS symbolic execution, ends up with a decompiled
             code, with labels and gotos.
 
@@ -229,7 +229,7 @@ class VM(EasyCopy):
 
             for i in range(200): # 300
                 '''
-                    
+
                     Find all the jumps, and expand them until
                     the next jump.
 
@@ -250,7 +250,7 @@ class VM(EasyCopy):
                 '''
                     repeat until there are no more jumps
                     to explore (so, until the trace didn't change)
-                    
+
                 '''
 
                 nodes = find_nodes(root, lambda n: n.trace == None)
@@ -279,7 +279,7 @@ class VM(EasyCopy):
         nodes = find_nodes(root, lambda n: n.trace is None)
 
         for node in nodes:
-            if node.jd in node.history and node.jd[1] > 0: # jd[1] == stack_len
+            if node.jd in node.history and node.jd[1] > 0 and len(node.history[node.jd].stack) == len(node.stack): # jd[1] == stack_len
                 folded, vars = fold_stacks(node.history[node.jd].stack, node.stack, node.depth)
                 loop_line = ('loop', node.history[node.jd], node.stack, folded, tuple(vars))
                 node.trace = [loop_line]
@@ -467,7 +467,7 @@ class VM(EasyCopy):
                     trace('[{}] {} {}',line[0],C.asm(op),C.asm(" ”"+line[2]+"”"))
                 elif line[2] > 0x1000000000:
                     trace('[{}] {} {}',line[0],C.asm(op),C.asm(hex(line[2])))
-                else:                
+                else:
                     trace('[{}] {} {}',line[0],C.asm(op),C.asm(str(line[2])))
 
         assert op not in ['jump', 'jumpi', 'revert', 'return', 'stop', 'jumpdest']
@@ -626,8 +626,8 @@ class VM(EasyCopy):
             call_pos = stack.pop()
             data_len = stack.pop()
 
-            if data_len != 0:   
-                call_data = ('call.data', call_pos, data_len)         
+            if data_len != 0:
+                call_data = ('call.data', call_pos, data_len)
 #                call_data = mask_op(('call.data', bits(add_op(data_len, call_pos))), size=bits(data_len), shl=bits(call_pos))
                 trace(('setmem', ('range', mem_pos, data_len), call_data))
 
@@ -671,7 +671,7 @@ class VM(EasyCopy):
             else:
                 fname = mem_load( arg_start,  4 )
                 fparams = mem_load( add_op(arg_start, 4), sub_op(arg_len, 4))
-                
+
             call_trace += (fname, fparams)
 
             trace(call_trace)
@@ -708,7 +708,7 @@ class VM(EasyCopy):
             else:
                 fname = mem_load( arg_start,  4 )
                 fparams = mem_load( add_op(arg_start, 4), sub_op(arg_len, 4))
-                
+
             call_trace += (fname, fparams)
 
             trace(call_trace)
