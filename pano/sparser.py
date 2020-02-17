@@ -103,10 +103,10 @@ def get_name(exp):
 def find_stores(exp):
 
     if exp ~ ('store', :size, :off, :idx, :val):
-        res = set([('storage', size, off, idx)])
+        res = {('storage', size, off, idx)}
 
-    elif exp ~ ('storage', ...):
-        res = set([exp])
+    elif exp ~ ('storage', _, _, _):
+        res = {exp}
 
     else:
         res = set()
@@ -157,7 +157,7 @@ def rewrite_functions(functions):
     stordefs = {}
 
     for src, dest in storages_assoc.items():
-        d = dest       
+        d = dest
         loc = get_loc(d)
         if loc is None: loc = 99
 
@@ -480,7 +480,7 @@ def _sparser(orig_storages):
     storages = res
 
     '''
-        
+
         array is when you add to a loc
 
     '''
@@ -508,7 +508,7 @@ def _sparser(orig_storages):
         assert s ~ ('stor', :size, :offset, :idx)
 
         idx ~ ('add', :idx)
-        
+
         if idx ~ ('add', ...) and get_loc(idx) is None:
             if idx ~ ('add', int:loc, :pos):
                 s = ('stor', size, offset, ('array', pos, ('loc', loc)))
@@ -520,7 +520,7 @@ def _sparser(orig_storages):
     storages = res
 
     '''
-        
+
         convert regular storages into lengths or locs
 
         that is - find all the idxs that (stor _ _ idx) exists
@@ -615,7 +615,7 @@ def _sparser(orig_storages):
         res[s] = dst
 
     '''
-    
+
         and replace storage definitions in it recursively
 
     '''
