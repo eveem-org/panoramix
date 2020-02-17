@@ -61,7 +61,7 @@ from pano.vm import VM
 from pano.contract import Contract
 from pano.prettify import pprint_trace, pretty_type, pprint_repr, explain
 
-VER = '4 Oct 2019'
+VER = '17 Feb 2020'
 
 addr_shortcuts = {
         'kitties': '0x06012c8cf97BEaD5deAe237070F9587f8E7A266d',
@@ -147,8 +147,8 @@ def decompile(this_addr, only_func_name=None):
         Function class constructor figures out it's kind (e.g. read-only, getter, etc),
         and some other things.
 
-            contract = Contract(addr=this_addr, 
-                                network=loader.network, 
+            contract = Contract(addr=this_addr,
+                                network=loader.network,
                                 ver=VER,
                                 problems=problems,
                                 functions=functions)
@@ -159,13 +159,13 @@ def decompile(this_addr, only_func_name=None):
 
         Figures out storage structure (you have to do it for the whole contract at once, not function by function)
         And folds the trace (that is, changes series of ifs into simpler forms)
-        
+
         Finally...
 
             loader.disasm() -- contains disassembled version
             contract.json() -- contains json version of the contract
 
-        Decompiled, human-readable version of the contract is done within this .py file, 
+        Decompiled, human-readable version of the contract is done within this .py file,
         starting from `with redirect_stdout...`
 
 
@@ -211,7 +211,7 @@ def decompile(this_addr, only_func_name=None):
 
         if '--silent' not in sys.argv:
             print(open(this_fname).read())
-        
+
         return
 
     '''
@@ -284,8 +284,8 @@ def decompile(this_addr, only_func_name=None):
 
     '''
 
-    contract = Contract(addr=this_addr, 
-                        network=loader.network, 
+    contract = Contract(addr=this_addr,
+                        network=loader.network,
                         ver=VER,
                         problems=problems,
                         functions=functions)
@@ -326,15 +326,6 @@ def decompile(this_addr, only_func_name=None):
 
         print(C.gray+"#")
         print(f"#  Panoramix {VER} ")
-
-        if loader.network != 'mainnet':
-            pretty_addr = f"{C.end + C.okgreen}{loader.network}:{loader.addr}{C.end + C.gray}"
-        else:
-            pretty_addr = f'{C.end}{loader.addr}{C.gray}'
-
-        print("#  Decompiled source of "+pretty_addr)
-        print("# ")
-        print("#  Let's make the world open source ")
         print("# " + C.end)
 
         if len(problems)>0:
