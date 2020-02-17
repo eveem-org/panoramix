@@ -26,16 +26,9 @@ cache_sigs = {
 
 
 def code_fetch(address, network='mainnet'):
-    logger.info('fetching code from %s', network)
+    assert network == "mainnet", "only mainnet supported, but you can set WEB3_PROVIDER_URI to whatever node you want on whatever network"
 
-    if network == 'goerli':
-        url = f"https://goerli.infura.io/v3/{secret.INFURA_KEY}"
-    else:
-        url = f"https://{network}.infura.io/"
-
-    from web3 import Web3, HTTPProvider
-
-    w3 = Web3(HTTPProvider(url))
+    from web3.auto import w3
     code = w3.eth.getCode(address).hex()[2:]
 
     return code
@@ -179,7 +172,7 @@ class Loader(EasyCopy):
                         fi = if_false[0]
                         if fi ~ ('jd', :jd):
                             return int(jd)
-                            
+
                     if find_f_list(if_true, func_calls) == []:
                         fi = if_true[0]
                         if fi ~ ('jd', :jd):
@@ -224,7 +217,7 @@ class Loader(EasyCopy):
                 self.signatures[padded] = name
 
         if hash is None:
-            self.hash_targets[name] = target            
+            self.hash_targets[name] = target
         else:
             self.hash_targets[padded_hex(hash, 8)] = target
 
@@ -254,7 +247,7 @@ class Loader(EasyCopy):
 
         while len(stack)>0:
             popped = stack.pop()
-            
+
             orig_line = line
 
             if popped not in opcode_dict:
