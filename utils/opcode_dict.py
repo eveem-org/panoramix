@@ -3,7 +3,7 @@
 
     opcode_dict is used by the loader to disassemble a contract
     stack_diffs is used by vm.apply_stack to test the proper parsing of opcodes
-  
+
 '''
 
 opcode_dict = {
@@ -78,6 +78,8 @@ opcode_dict = {
     0x43: 'number',
     0x44: 'difficulty',
     0x45: 'gaslimit',
+    0x46: 'chainid',
+    0x47: 'selfbalance',
 
 
     #
@@ -245,6 +247,8 @@ stack_diffs = {
   "balance": 0,
   "origin": 1,
   "address": 1,
+  "selfbalance": 1,
+  "chainid": 1,
   "call": -6,
   "callcode": -6,
   "delegatecall": -5,
@@ -259,7 +263,6 @@ stack_diffs = {
   "gasprice": 1,
   "extcodesize": 0,
   "extcodehash": 0,
-
   "extcodecopy": -4,
   "returndatasize": 1,
   "returndatacopy": -3,

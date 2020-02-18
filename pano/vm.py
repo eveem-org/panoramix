@@ -543,6 +543,9 @@ class VM(EasyCopy):
             off = sub_op(256, to_bytes(num))
             stack.append(mask_op(val, 8, off, shr=off))
 
+        elif op == 'selfbalance':
+            stack.append(('balance', 'address',))
+
         elif op == 'balance':
             addr = stack.pop()
             if opcode(addr) == 'mask_shl' and addr[:4] == ('mask_shl', 160, 0, 0):
@@ -768,7 +771,7 @@ class VM(EasyCopy):
         elif op in ('extcodesize', 'extcodehash', 'blockhash'):
             stack.append((op, stack.pop(),))
 
-        elif op in ['callvalue', 'caller', 'address', 'number',  'gas', 'origin', 'timestamp',
+        elif op in ['callvalue', 'caller', 'address', 'number',  'gas', 'origin', 'timestamp', 'chainid',
                         'difficulty', 'gasprice', 'coinbase', 'gaslimit', 'calldatasize', 'returndatasize']:
             stack.append(op)
 
