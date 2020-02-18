@@ -238,8 +238,7 @@ def decompile(this_addr, only_func_name=None):
         logger.info(C.green + f"Parsing {fname}..." + C.end) # this absolutely needs to be green! :D
 
         try:
-            if target > 1:
-                assert loader.lines[target][1] == 'jumpdest', loader.lines[target]
+            if target > 1 and loader.lines[target][1] == 'jumpdest':
                 target += 1
 
             @timeout_decorator.timeout(30, use_signals=True) # 180 used in production
