@@ -419,6 +419,10 @@ class VM(EasyCopy):
             trace.append((op, ))
             return trace
 
+        if op == 'UNKNOWN':
+            trace.append(('invalid', ))
+            return trace
+
         if op in ['return', 'revert']:
             p = stack.pop()
             n = stack.pop()
@@ -470,7 +474,7 @@ class VM(EasyCopy):
                 else:
                     trace('[{}] {} {}',line[0],C.asm(op),C.asm(str(line[2])))
 
-        assert op not in ['jump', 'jumpi', 'revert', 'return', 'stop', 'jumpdest']
+        assert op not in ['jump', 'jumpi', 'revert', 'return', 'stop', 'jumpdest', 'UNKNOWN']
 
         param = 0
         if len(line)>2:
