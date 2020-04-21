@@ -13,7 +13,7 @@ from pano.prettify import prettify
 logger = logging.getLogger(__name__)
 
 '''
-    
+
     Symbolic stack module, used by vm.py.
 
 '''
@@ -51,7 +51,7 @@ class Stack(EasyCopy):
     def __init__(self, val=None):
         if type(val) == tuple:
             val = list(val)
-            
+
         self.stack = val or []
 
     def __str__(self):
@@ -84,6 +84,7 @@ class Stack(EasyCopy):
         self.stack[-1], self.stack[pos] = self.stack[pos], self.stack[-1]
 
     def dup(self, idx):
+        assert idx > 0
         self.stack.append(self.stack[-idx])
 
     def folded_with(self, latter, loader_jds, depth):
@@ -134,7 +135,7 @@ class Stack(EasyCopy):
             return Stack.simplify_cache[exp]
 
         ret = Stack._simplify(exp)
-        
+
         Stack.simplify_cache[exp] = ret
 
         return ret
@@ -156,7 +157,7 @@ class Stack(EasyCopy):
             if left_mask:
                 (m1, m2) = left_mask
                 exp = mask_op(right, m1, m2)
-                
+
             else: # could be 'elif to_mask(right)', but that's slower bc we have to call to_mask twice then
                 right_mask = to_mask(right)
 

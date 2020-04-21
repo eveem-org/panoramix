@@ -39,8 +39,10 @@ elif '--errors' in sys.argv:
 else:
     log_level = logging.INFO
 
+logging.getLogger("pano.matcher").setLevel(logging.INFO)
+
 coloredlogs.install(level=log_level,
-                    fmt='%(asctime)s %(message)s', datefmt='%H:%M:%S',
+                    fmt='%(asctime)s %(name)s %(message)s', datefmt='%H:%M:%S',
                     field_styles={'asctime': {'color': 'white', 'faint': True}})
 
 import timeout_decorator
@@ -223,7 +225,7 @@ def decompile(this_addr, only_func_name=None):
     problems = {}
     functions = {}
 
-    for (hash, fname, target) in loader.func_list:
+    for (hash, fname, target, stack) in loader.func_list:
         '''
             hash contains function hash
             fname contains function name
@@ -235,7 +237,8 @@ def decompile(this_addr, only_func_name=None):
             # skip all the functions that are not it
             continue
 
-        logger.info(C.green + f"Parsing {fname}..." + C.end) # this absolutely needs to be green! :D
+        logger.info(f"Parsing %s...", fname)
+        logger.debug("stack %s", stack)
 
         try:
             if target > 1 and loader.lines[target][1] == 'jumpdest':
@@ -243,7 +246,7 @@ def decompile(this_addr, only_func_name=None):
 
             @timeout_decorator.timeout(30, use_signals=True) # 180 used in production
             def dec():
-                trace = VM(loader).run(target)
+                trace = VM(loader).run(target, stack=stack)
                 explain('Initial decompiled trace', trace[1:])
 
                 if '--explain' in sys.argv:
