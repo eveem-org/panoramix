@@ -606,6 +606,25 @@ class VM(EasyCopy):
             else:
                 stack.append(mask_op(exp, offset=minus_op(off), shr=off))
 
+        if op == "sar":
+            off = stack.pop()
+            exp = stack.pop()
+            if all_concrete(off, exp):
+                sign = exp & (1 << 255)
+                if off >= 256:
+                    if sign:
+                        stack.append(2**256 - 1)
+                    else:
+                        stack.append(0)
+                else:
+                    shifted = exp >> off
+                    if sign:
+                        shifted |= (2**256 - 1) << (256 - off)
+                    stack.append(shifted)
+            else:
+                # FIXME: This won't give the right result...
+                stack.append(mask_op(exp, offset=minus_op(off), shr=off))
+
         if op == "add":
             stack.append(add_op(stack.pop(), stack.pop()))
 
@@ -922,7 +941,7 @@ class VM(EasyCopy):
             logger.error(
                 "expected %s, got %s stack diff",
                 opcode_dict.stack_diffs[op],
-                stack.len() - org_len,
+                stack.len() - previous_len,
             )
             assert False, f"opcode {op} not processed correctly"
 
