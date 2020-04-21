@@ -613,13 +613,13 @@ class VM(EasyCopy):
                 sign = exp & (1 << 255)
                 if off >= 256:
                     if sign:
-                        stack.append(2**256 - 1)
+                        stack.append(2 ** 256 - 1)
                     else:
                         stack.append(0)
                 else:
                     shifted = exp >> off
                     if sign:
-                        shifted |= (2**256 - 1) << (256 - off)
+                        shifted |= (2 ** 256 - 1) << (256 - off)
                     stack.append(shifted)
             else:
                 # FIXME: This won't give the right result...
