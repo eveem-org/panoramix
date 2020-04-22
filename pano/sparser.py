@@ -210,25 +210,23 @@ def rewrite_functions(functions):
 
     for loc in sorted_keys:
             for l in sorted(stordefs[loc]):
-                if (l ~ ('stor', int, int, ('loc', _))) or \
-                   (l ~ ('stor', int, int, ('name', ...))):
-                   pass
+                if match(l, ('stor', int, int, ('loc', Any))) or match(l, ('stor', int, int, ('name', ...))):
+                    continue
 
-                else:
-                    name = get_name(l)
-                    if name is None:
-                        name = 'stor' + str(loc)
+                name = get_name(l)
+                if name is None:
+                    name = 'stor' + str(loc)
 
-                    idx = match(l, ('stor', int, int, ':idx')).idx
-
+                if m := match(l, ('stor', int, int, ':idx')):
+                    idx = m.idx
                     if opcode(idx) == 'map':
                         defs.append(('def', name, loc, ('mapping', get_type(stordefs[loc]))))
+                        break
                     elif opcode(idx) in ('array', 'length'):
                         defs.append(('def', name, loc, ('array', get_type(stordefs[loc]))))
-                    else:
-                        pass # it's length probably
+                        break
 
-                    break
+            # This is executed if we didn't add any defs in the loop above.
             else:
                 # all stor references are not arrays/maps, let's just print them out
                 for l in sorted(stordefs[loc]):
@@ -265,8 +263,8 @@ def repl_stor(exp, assoc):
     if type(exp) == list:
         return [repl_stor(e, assoc) for e in exp]
 
-    if exp ~ ('store', :size, :off, :idx, :val):
-
+    if opcode(exp) == "store":
+        _, size, off, idx, val = exp
         dest = assoc[('storage', size, off, idx)]
         return ('store', ) + dest[1:] + (repl_stor(val, assoc), )
 
@@ -307,10 +305,10 @@ def replace_names_in_assoc_bool(names, storages_assoc):
 def replace_names_in_assoc(names, storages_assoc):
     for pattern, name in names.items():
 
-        if pattern ~ ('bool', ...):
+        if opcode(pattern) == 'bool':
             continue
 
-        if pattern ~ ('struct', ...):
+        if opcode(pattern) == 'struct':
             stor_id = pattern
         else:
             stor_id = storages_assoc[pattern]
@@ -320,8 +318,8 @@ def replace_names_in_assoc(names, storages_assoc):
             # we need to check first if a given location is only accessed
             # this way. otherwise it may be a function like getLength, that
             # returns the array length, and we don't want to use it as a storage name
-            if all([pattern ~ ('stor', _, _, ('loc', _)) \
-                    for pattern in storages_assoc if get_loc(pattern) == num]):
+            if all(match(pattern, ('stor', Any, Any, ('loc', Any))) \
+                   for pattern in storages_assoc if get_loc(pattern) == num):
 
                 used_locs.add(stor_id)
 
@@ -379,7 +377,7 @@ def find_storage_names(functions):
 
             new_name = new_name.split('(')[0]
 
-            if getter ~ ('storage', 160, ...):
+            if match(getter, ('storage', 160, ...)):
                 if ('address' not in new_name.lower()) and \
                    ('addr' not in new_name.lower()) and \
                    ('account' not in new_name.lower()) and \
