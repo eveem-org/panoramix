@@ -1,6 +1,7 @@
 # coding: tilde
 
 from pano.prettify import pprint_trace, pretty_stor
+from pano.matcher import match, Any
 
 from utils.helpers import opcode, find_f, replace, replace_f, tuplify, replace_lines, get_op, hashable,  to_exp2
 
@@ -30,11 +31,11 @@ def get_loc(exp):
                                      # don't follow this one when looking for loc
             return None
 
-        elif exp ~ ('loc', :num):
-            return num
+        elif m := match(exp, ('loc', ':num')):
+            return m.num
 
-        elif exp ~ ('name', _, :num):
-            return num
+        elif m := match(exp, ('name', Any, ':num')):
+            return m.num
 
         else:
             for e in exp:
@@ -43,20 +44,20 @@ def get_loc(exp):
 
             return None
 
-    if exp ~ ('type', _, ('field', _, :m_idx)):
-        exp = m_idx
+    if m := match(exp, ('type', Any, ('field', Any, ':m_idx'))):
+        exp = m.m_idx
 
-    if exp ~ ('storage', _, _, :e):
-        exp = e
+    if m := match(exp, ('storage', Any, Any, ':e')):
+        exp = m.e
 
-    if exp ~ ('stor', _, _, :e):
-        exp = e
+    if m := match(exp, ('stor', Any, Any, ':e')):
+        exp = m.e
 
-    if exp ~ ('stor', :e):
-        exp = e
-
+    if m := match(exp, ('stor', ':e')):
+        exp = m.e
 
     return f(exp)
+
 
 def get_name_full(exp):
     def f(exp):
@@ -204,12 +205,12 @@ def rewrite_functions(functions):
 
     try:
         sorted_keys = sorted(stordefs.keys())
-    except:
+    except Exception:
         logger.warn('unusual storage location')
         sorted_keys = stordefs.keys()
 
     for loc in sorted_keys:
-            for l in stordefs[loc]:
+            for l in sorted(stordefs[loc]):
                 if (l ~ ('stor', int, int, ('loc', _))) or \
                    (l ~ ('stor', int, int, ('name', ...))):
                    pass
@@ -231,7 +232,7 @@ def rewrite_functions(functions):
                     break
             else:
                 # all stor references are not arrays/maps, let's just print them out
-                for l in stordefs[loc]:
+                for l in sorted(stordefs[loc]):
                     name = get_name(l)
 
                     if name is None:

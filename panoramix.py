@@ -352,8 +352,6 @@ def decompile(this_addr, only_func_name=None):
         if len(contract.stor_defs) > 0:
             print(f"{C.green}def {C.end}storage:")
 
-            storage = {}
-
             for s in contract.stor_defs:
                 print(pretty_type(s))
 
