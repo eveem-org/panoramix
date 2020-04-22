@@ -97,8 +97,7 @@ def get_name(exp):
     if r is None:
         return None
     else:
-        assert r ~ ('name', :name, _)
-        return name
+        return match(r, ('name', ':name', Any)).name
 
 
 def find_stores(exp):
@@ -220,7 +219,7 @@ def rewrite_functions(functions):
                     if name is None:
                         name = 'stor' + str(loc)
 
-                    assert l ~ ('stor', int, int, :idx)
+                    idx = match(l, ('stor', int, int, ':idx')).idx
 
                     if opcode(idx) == 'map':
                         defs.append(('def', name, loc, ('mapping', get_type(stordefs[loc]))))
