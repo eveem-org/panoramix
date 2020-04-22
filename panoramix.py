@@ -5,7 +5,6 @@
 import json
 import logging
 import os
-import random
 import sys
 import traceback
 from contextlib import redirect_stdout
@@ -14,7 +13,6 @@ import coloredlogs
 import timeout_decorator
 
 import pano.folder as folder
-import various
 from pano.contract import Contract
 from pano.function import Function
 from pano.loader import Loader
@@ -436,13 +434,12 @@ function_name = None
 if len(sys.argv) == 1:
     print(
         f"""
-    python3 panoramix.py [address|shortcut|stdin|random] [func_name] [--verbose] [--silent]
+    python3 panoramix.py [address|shortcut|stdin] [func_name] [--verbose] [--silent]
 
         address: {C.gray}e.g. 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d
                  you can provide multiple, separating with comma{C.end}
 
         shortcut: {C.gray}e.g. kitties, unicorn, solidstamp{C.end}
-        random: {C.gray}a random smart contract{C.end}
         stdin: {C.gray}bytecode from stdin{C.end}
 
         --silent: {C.gray}writes output only to the ./cache_pan/ directory{C.end}
@@ -471,9 +468,6 @@ if sys.argv[1] == "stdin":
 
     decompile_bulk(bulk_list)
 
-elif sys.argv[1] == "bulk":
-    decompile_bulk(various.addr_list[:100])
-
 elif "," in sys.argv[1]:
     decompile_bulk(sys.argv[1].split(","))
 
@@ -482,11 +476,6 @@ else:
 
     if this_addr.lower() in addr_shortcuts:
         this_addr = addr_shortcuts[this_addr.lower()]
-
-    elif this_addr.lower() == "random":
-        from various import random_addresses
-
-        this_addr = random_addresses[random.randint(0, len(random_addresses))]
 
     if len(sys.argv) > 2:
         if not sys.argv[2].startswith("--"):
