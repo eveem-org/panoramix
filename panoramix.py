@@ -281,7 +281,7 @@ def decompile(this_addr, only_func_name=None):
         json_fname = cache_fname(this_addr, "json")
         with open(json_fname, "w") as f:
             f.write(contract.json())
-    except:
+    except Exception:
         # .json is a nice to have, whatever crazy error happens we should
         # still proceed with the rest of decompilation
         logger.error("failed contract serialization")
@@ -334,7 +334,7 @@ def decompile(this_addr, only_func_name=None):
             shown_already.add(func.hash)
             print(func.print())
 
-        if len(shown_already) > 0:
+        if shown_already:
             print()
 
         if len(contract.stor_defs) > 0:
@@ -369,11 +369,9 @@ def decompile(this_addr, only_func_name=None):
             key=lambda f: f.priority()
         )  # sort func list by length, with some caveats
 
-        if len([f for f in func_list if f.hash not in shown_already]) > 0:
-            if (
-                len(shown_already) > 0
-            ):  # otherwise no irregular functions, so this is not needed :)
-                print("" + C.gray + "#\n#  Regular functions\n#" + C.end + "\n")
+        if shown_already and any(1 for f in func_list if f.hash not in shown_already):
+            # otherwise no irregular functions, so this is not needed :)
+            print(C.gray + "#\n#  Regular functions\n#" + C.end + "\n")
 
         else:
             print(
