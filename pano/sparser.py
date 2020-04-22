@@ -209,7 +209,7 @@ def rewrite_functions(functions):
         sorted_keys = stordefs.keys()
 
     for loc in sorted_keys:
-            for l in sorted(stordefs[loc]):
+            for l in sorted(stordefs[loc], key=str):
                 if match(l, ('stor', int, int, ('loc', Any))) or match(l, ('stor', int, int, ('name', ...))):
                     continue
 
@@ -229,7 +229,7 @@ def rewrite_functions(functions):
             # This is executed if we didn't add any defs in the loop above.
             else:
                 # all stor references are not arrays/maps, let's just print them out
-                for l in sorted(stordefs[loc]):
+                for l in sorted(stordefs[loc], key=str):
                     name = get_name(l)
 
                     if name is None:

@@ -139,7 +139,7 @@ def split_or(value):
             if f_off == 0 and s_off == ('add', 256, ('mul', -1, ('mask_shl', 253, 0, 3, ('add', 32, ('mul', -1, ('mask_shl', 5, 0, 0, f_size[4])))))):
                 assert match(s_size, ('mask_shl', Any, Any, Any, ('add', 32, ('mul', -1, ...))))
                 return ret_rows
-        except TypeError:
+        except (TypeError, IndexError):
             pass
 
     try:
