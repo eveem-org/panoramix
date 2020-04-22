@@ -1,16 +1,28 @@
-# coding: tilde
-
-from utils.helpers import opcode, replace_f, car
-from utils.helpers import COLOR_HEADER, COLOR_BLUE, COLOR_OKGREEN, COLOR_WARNING, FAIL, ENDC, COLOR_BOLD, COLOR_UNDERLINE, COLOR_GREEN, COLOR_GRAY
-from pano.prettify import prettify
-
-from core.arithmetic import is_zero, comp_bool
-
 import logging
+
+from core.arithmetic import comp_bool, is_zero, simplify_bool
+from pano.matcher import match
+from pano.prettify import prettify
+from utils.helpers import (
+    COLOR_BLUE,
+    COLOR_BOLD,
+    COLOR_GRAY,
+    COLOR_GREEN,
+    COLOR_HEADER,
+    COLOR_OKGREEN,
+    COLOR_UNDERLINE,
+    COLOR_WARNING,
+    ENDC,
+    FAIL,
+    car,
+    opcode,
+    replace_f,
+)
+
 logger = logging.getLogger(__name__)
 
 
-'''
+"""
 
     Folder takes takes all the execution paths, and merges them into
     one, as concise as possible.
@@ -27,20 +39,19 @@ logger = logging.getLogger(__name__)
     While the code can be cleaned up and refactored, I'm not sure the algorithm
     could be much simpler.
 
-'''
-
+"""
 
 
 def fold(trace):
 
-    '''
+    """
         as_paths unfolds the trace into a list of branchless paths that the contract can
         possibly take. 'if's are converted into condition assertions, e.g.
 
         [x,
          y,
          z,
-         (if, cond, 
+         (if, cond,
                 [a,
                  b,
                  c,
@@ -48,7 +59,7 @@ def fold(trace):
                  q,
                  w,
                  e]
-               , 
+               ,
                  [d,
                   e,
                   f,
@@ -84,13 +95,12 @@ def fold(trace):
               w,
               e]
         ]
-    '''
+    """
 
     try:
         paths = as_paths(trace)
 
-
-        '''
+        """
 
             fold_paths turns those paths again into folded ones, but also with simple
             ifs (that is, not if-else), and not necessarily ifs ending a trace, so - in the
@@ -103,11 +113,11 @@ def fold(trace):
             only for a display that's readable to humans. Api/json output has the original
             form.
 
-        '''
+        """
 
         log = meta_fold_paths(paths)
 
-        '''
+        """
             some additional folding below, e.g. when there is an if-else like below:
             (if, cond, [revert], [a,b,c]) # if cond revert else a,b,c
             it can be turned into
@@ -115,65 +125,65 @@ def fold(trace):
             - no need to use 'else', since the 'if-true' trace always returns, and 'else'
             is unnecessary
 
-        '''
+        """
         log = fold_aux(log)
 
         return log
 
-    except:
+    except Exception:
         # make folder fail gracefuly
-        logger.error(f'folder failed in a function.')
+        logger.exception(f"folder failed in a function.")
         return trace
+
 
 def make_fands(exp):
     # see `ferlan.getOrderDataClaim` for why it's necessary
-    if exp ~ ('or', *terms):
-        return ('for', ) + terms
-    elif exp ~ ('and', *terms):
-        return ('fand', ) + terms
+    if opcode(exp) == "or":
+        return ("for",) + exp[1:]
+    elif opcode(exp) == "and":
+        return ("fand",) + exp[1:]
     else:
         return exp
+
 
 def unmake_fands(exp):
-    if exp ~ ('for', *terms):
-        return ('or', ) + terms
-
-    if exp ~ ('fand', *terms):
-        return ('and',) + terms
+    if opcode(exp) == "for":
+        return ("or",) + exp[1:]
+    elif opcode(exp) == "fand":
+        return ("and",) + exp[1:]
     else:
         return exp
 
 
-
-def as_paths(trace, path = None):
+def as_paths(trace, path=None):
     assert type(trace) == list
 
     path = path or tuple()
 
-#    self.find_offsets()
+    #    self.find_offsets()
 
     trace = replace_f(trace, make_fands)
 
     for line in trace:
-        if opcode(line) == 'if':
+        if opcode(line) == "if":
             # assumes 'ifs' end trace
             cond, if_true, if_false = line[1], line[2], line[3]
-            return as_paths(if_true, path + (cond, )) + as_paths(if_false, path + (is_zero(cond), ))
+            return as_paths(if_true, path + (cond,)) + as_paths(
+                if_false, path + (is_zero(cond),)
+            )
 
-        if opcode(line) == 'LOOP':
-            path += (('LOOP', line[2]), )
+        if opcode(line) == "LOOP":
+            path += (("LOOP", line[2]),)
             return as_paths(line[1], path)
 
-        path += (line, )
+        path += (line,)
 
-#    pprint_logic()
+    #    pprint_logic()
 
-
-    return (list(path), )
-
+    return (list(path),)
 
 
-'''
+"""
 
     Folder_aux is a set of additional rules for a last-minute folding,
     after everything else is done.
@@ -183,9 +193,19 @@ def as_paths(trace, path = None):
     in mind.
 
 
-'''
+"""
 
-TERMINATING = ('return', 'stop', 'selfdestruct', 'invalid', 'assert_fail', 'revert', 'continue', 'undefined')
+TERMINATING = (
+    "return",
+    "stop",
+    "selfdestruct",
+    "invalid",
+    "assert_fail",
+    "revert",
+    "continue",
+    "undefined",
+)
+
 
 def fold_aux(trace):
     if type(trace) != list:
@@ -195,24 +215,31 @@ def fold_aux(trace):
     out = []
 
     for idx, line in enumerate(trace):
-        if opcode(line) == 'while':
+        if opcode(line) == "while":
             cond, trace, jds, setvars = line[1:]
 
             trace = fold(trace)
-            line = ('while', cond, trace, jds, setvars)
+            line = ("while", cond, trace, jds, setvars)
 
             out.append(line)
 
-        elif opcode(line) == 'if':
-            if line ~ ('if', :cond, :if_true):
-                if_false = trace[idx+1:]
+        elif opcode(line) == "if":
+            if m := match(line, ("if", ":cond", ":if_true")):
+                cond, if_true = m.cond, m.if_true
+                if_false = trace[idx + 1 :]
                 last_true = if_true[-1]
-                if if_false == [('return', 0)] or if_false == [('revert', 0)] or opcode(car(if_false)) == 'invalid':# and\
-                    if opcode(last_true) not in TERMINATING:# or (last_true ~ ('if', _, _))):
+                if (
+                    if_false == [("return", 0)]
+                    or if_false == [("revert", 0)]
+                    or opcode(car(if_false)) == "invalid"
+                ):  # and\
+                    if (
+                        opcode(last_true) not in TERMINATING
+                    ):  # or (last_true ~ ('if', _, _))):
                         if_true.append(if_false[0])
 
                     if_true = fold_aux(if_true)
-                    line = ('if', cond, if_true, if_false)
+                    line = ("if", cond, if_true, if_false)
 
                     out.append(line)
                     return out
@@ -220,26 +247,30 @@ def fold_aux(trace):
                 else:
                     if_true = fold_aux(if_true)
 
-                    line = ('if', cond, if_true)
+                    line = ("if", cond, if_true)
                     out.append(line)
 
-            elif line ~ ('if', :cond, :if_true, :if_false):
+            elif m := match(line, ("if", ":cond", ":if_true", ":if_false")):
+                cond, if_true, if_false = m.cond, m.if_true, m.if_false
                 if_true = fold_aux(if_true)
                 if_false = fold_aux(if_false)
 
-                if len(if_true) > 0 and len(if_false) > 0 and \
-                   len(if_true) > 0 and \
-                   opcode(if_true[-1]) in TERMINATING and \
-                   opcode(car(if_false)) not in ('invalid', 'revert'):
+                if (
+                    len(if_true) > 0
+                    and len(if_false) > 0
+                    and len(if_true) > 0
+                    and opcode(if_true[-1]) in TERMINATING
+                    and opcode(car(if_false)) not in ("invalid", "revert")
+                ):
                     # ^ should be some more generic check that all if_true
                     #   paths end with exit
 
-                    line = ('if', cond, if_true)
+                    line = ("if", cond, if_true)
                     out.append(line)
                     out.extend(if_false)
 
                 else:
-                    line = ('if', cond, if_true, if_false)
+                    line = ("if", cond, if_true, if_false)
                     out.append(line)
             else:
                 assert False, line
@@ -250,16 +281,17 @@ def fold_aux(trace):
     return out
 
 
-'''
+"""
 
     Helper functions, similar to prettify and algebra, but different
     enough to have a separate implementation here.
 
-'''
+"""
+
 
 def pprint(exp):
     for e in exp:
-        print(' ', prettify(e, add_color=True))
+        print(" ", prettify(e, add_color=True))
 
 
 def pprint_logic(exp, indent=2):
@@ -267,20 +299,22 @@ def pprint_logic(exp, indent=2):
         for idx, line in enumerate(exp):
             pprint_logic(line, indent)
 
-    elif opcode(exp) == 'or' and len(exp)>1:
-        print(' '*indent + 'if')
-        pprint_logic(exp[1], indent+2)
+    elif opcode(exp) == "or" and len(exp) > 1:
+        print(" " * indent + "if")
+        pprint_logic(exp[1], indent + 2)
         for line in exp[2:]:
-            print(' '*indent + 'or')
-            pprint_logic(line, indent+2)
+            print(" " * indent + "or")
+            pprint_logic(line, indent + 2)
     else:
-        print(' '*indent + prettify(exp, add_color=True))
+        print(" " * indent + prettify(exp, add_color=True))
+
 
 def sorted_tuple(line):
     row = list(line[1:])
     row.sort(key=lambda x: len(x) if type(x) == list else 0)
 
-    return ('or', ) + tuple(row)
+    return ("or",) + tuple(row)
+
 
 def or_op(*args):
     ret = tuple()
@@ -288,12 +322,13 @@ def or_op(*args):
         if type(r) == list:
             r = and_op(*r)
 
-        if opcode(r) == 'or':
+        if opcode(r) == "or":
             ret += r[1:]
         else:
-            ret += (r, )
+            ret += (r,)
 
-    return sorted_tuple(('or', ) + ret)
+    return sorted_tuple(("or",) + ret)
+
 
 def and_op(*args):
     # returns a list that doesn't have elements with 'or' inside
@@ -306,33 +341,35 @@ def and_op(*args):
         else:
             ret.append(exp)
 
-        if opcode(exp) == 'or':
+        if opcode(exp) == "or":
             ret = []
             for variant in exp[1:]:
-                ret.append(and_op(*(args[:idx] + (variant, ) + args[idx+1:])))
+                ret.append(and_op(*(args[:idx] + (variant,) + args[idx + 1 :])))
 
             return or_op(*ret)
 
     return ret
 
-assert and_op(1,2,3,4) == [1,2,3,4]
-assert or_op(1,2) == ('or', 1, 2)
 
-c = and_op(1,2,3)
-d = or_op(c,c)
-assert d == ('or', [1,2,3], [1,2,3])
+assert and_op(1, 2, 3, 4) == [1, 2, 3, 4]
+assert or_op(1, 2) == ("or", 1, 2)
 
-b = or_op(1,2)
-a = and_op('a',b,'c')
+c = and_op(1, 2, 3)
+d = or_op(c, c)
+assert d == ("or", [1, 2, 3], [1, 2, 3])
 
-assert a == ('or', ['a',1,'c'], ['a', 2, 'c'])
+b = or_op(1, 2)
+a = and_op("a", b, "c")
+
+assert a == ("or", ["a", 1, "c"], ["a", 2, "c"])
+
 
 def starting_with(or_tuple, starting):
     ret = []
 
     for exp in or_tuple[1:]:
-        if exp[:len(starting)] == starting:
-            ret.append(exp[len(starting):])
+        if exp[: len(starting)] == starting:
+            ret.append(exp[len(starting) :])
 
     return ret
 
@@ -343,13 +380,13 @@ def ending_with(or_tuple, ending):
     ret = []
 
     for exp in or_tuple[1:]:
-        if exp[-len(ending):] == ending:
-            ret.append(exp[:-len(ending)])
+        if exp[-len(ending) :] == ending:
+            ret.append(exp[: -len(ending)])
 
     return ret
 
 
-'''
+"""
 
     Folder proper.
 
@@ -364,33 +401,34 @@ def ending_with(or_tuple, ending):
     of two files, but with way more than two objects
     to compare at the same time.
 
-'''
+"""
 
 
 def meta_fold_paths(paths):
     for_merge = []
     for r in paths:
         assert type(r) in (tuple, list)
-        if len(r)>0:
+        if len(r) > 0:
             for_merge.append(r)
 
     output = fold_paths(for_merge)
 
     assert type(output) == list
 
-    output = flatten(output)  # converts if-else statements into if statements, if possible
+    output = flatten(
+        output
+    )  # converts if-else statements into if statements, if possible
     output = cleanup_ors(output)
     output = make_ifs(output)
     output = merge_ifs(output)
 
     output = replace_f(output, unmake_fands)
 
-
     return output
 
-def flatten(path):
 
-    def ends_exec(path): # check if all the subpaths end execution
+def flatten(path):
+    def ends_exec(path):  # check if all the subpaths end execution
 
         # only checking the last line, previous ones may end execution as well
         # but at least one leading up to the last line didn't - otherwise
@@ -398,12 +436,21 @@ def flatten(path):
 
         line = path[-1]
 
-        if opcode(line) in ('return', 'stop', 'selfdestruct', 'invalid', 'assert_fail', 'revert', 'continue', 'undefined'):
+        if opcode(line) in (
+            "return",
+            "stop",
+            "selfdestruct",
+            "invalid",
+            "assert_fail",
+            "revert",
+            "continue",
+            "undefined",
+        ):
             return True
-        elif opcode(line) == 'or':
+        elif opcode(line) == "or":
             assert len(line) == 3
             return ends_exec(line[1]) and ends_exec(line[2])
-        elif opcode(line) == 'while':
+        elif opcode(line) == "while":
             # well, 'while True' ends execution, but all the other
             # ones most likely don't. if we miss some cases nothing
             # bad will happen - just slightly less readable code
@@ -415,11 +462,13 @@ def flatten(path):
 
     for idx, line in enumerate(path):
 
-        if opcode(line) != 'or':
+        if opcode(line) != "or":
             res.append(line)
             continue
 
-        assert len(line) == 3, line  # ('or', [exec1], [exec2]) - we're dealing only with if-else at this stage
+        assert (
+            len(line) == 3
+        ), line  # ('or', [exec1], [exec2]) - we're dealing only with if-else at this stage
 
         if len(line[1]) == 1 and len(line[2]) == 1:
             # sometimes, after folding, both paths are identical,
@@ -429,11 +478,11 @@ def flatten(path):
         elif ends_exec(line[1]):
             res.extend(try_merge(flatten(line[1]), flatten(line[2])))
 
-#        elif idx == len(path) - 1:
-            # the last or = we're flattening
-#            res.extend(try_merge(flatten(line[1]), flatten(line[2])))
+        #        elif idx == len(path) - 1:
+        # the last or = we're flattening
+        #            res.extend(try_merge(flatten(line[1]), flatten(line[2])))
         else:
-            res.append(('or', flatten(line[1]), flatten(line[2])))
+            res.append(("or", flatten(line[1]), flatten(line[2])))
 
     return res
 
@@ -453,9 +502,10 @@ def try_merge(one, two):
     idx -= 1
 
     if idx > 0:
-        return [('or', one[:-idx], two[:-idx])] + one[-idx:]
+        return [("or", one[:-idx], two[:-idx])] + one[-idx:]
     else:
-        return [('or', one)] + two
+        return [("or", one)] + two
+
 
 def cleanup_ors(path):
     assert type(path) == list
@@ -465,50 +515,51 @@ def cleanup_ors(path):
     while idx < len(path):
         if type(path[idx]) == list:
 
-            path = path[:idx] + path[idx] + path[idx+1:]
+            path = path[:idx] + path[idx] + path[idx + 1 :]
 
         line = path[idx]
 
-        if opcode(line) != 'or':
+        if opcode(line) != "or":
             ret.append(line)
 
-        elif len(line) == 2: # one-sided or
+        elif len(line) == 2:  # one-sided or
             # clean up the inside, skip the next line in the main path
             condition = line[1][0]
-            line = ('or', cleanup_ors(line[1]))
+            line = ("or", cleanup_ors(line[1]))
             ret.append(line)
             idx += 1
 
-        elif len(line) == 3: # two-sided or
+        elif len(line) == 3:  # two-sided or
             if len(line[1]) == 1:
-                assert comp_bool(line[1][0],is_zero(line[2][0]))
-                line = ('or', cleanup_ors(line[2]))
+                assert comp_bool(simplify_bool(line[1][0]), is_zero(line[2][0]))
+                line = ("or", cleanup_ors(line[2]))
                 ret.append(line)
             else:
-                assert comp_bool(is_zero(line[1][0]), line[2][0])
-                line = ('or', cleanup_ors(line[1]), cleanup_ors(line[2][1:]))
+                assert comp_bool(is_zero(line[1][0]), simplify_bool(line[2][0]))
+                line = ("or", cleanup_ors(line[1]), cleanup_ors(line[2][1:]))
                 ret.append(line)
 
-        else: # three-sided ors? madness!
+        else:  # three-sided ors? madness!
             assert False
 
         idx += 1
 
     return ret
 
+
 def make_ifs(path):
     assert type(path) == list
-    
+
     ret = []
     for line in path:
-        if opcode(line) != 'or':
+        if opcode(line) != "or":
             ret.append(line)
 
         elif len(line) == 2:
-            ret.append(('if', line[1][0], make_ifs(line[1][1:])))
+            ret.append(("if", line[1][0], make_ifs(line[1][1:])))
 
         elif len(line) == 3:
-            ret.append(('if', line[1][0], make_ifs(line[1][1:]), make_ifs(line[2])))
+            ret.append(("if", line[1][0], make_ifs(line[1][1:]), make_ifs(line[2])))
 
         else:
             assert False
@@ -526,12 +577,13 @@ def try_merge_ifs(cond, if_true, if_false):
 
     if idx > 0:
         lines = if_true[:idx]
-        merged = ('if', cond, if_true[idx:], if_false[idx:])
+        merged = ("if", cond, if_true[idx:], if_false[idx:])
     else:
         lines = []
-        merged = ('if', cond, if_true, if_false)
+        merged = ("if", cond, if_true, if_false)
 
     return lines, merged
+
 
 def merge_ifs(path):
     # detects if-else sections that have the same beginnings, and moves
@@ -542,12 +594,16 @@ def merge_ifs(path):
 
     for idx, line in enumerate(path):
         assert type(line) != list
-        if opcode(line) != 'if':
+        if opcode(line) != "if":
             ret.append(line)
             continue
         elif len(line) == 3:
             # one-sided if
-            cond, if_true, if_false = line[1], merge_ifs(line[2]), merge_ifs(path[idx+1:])
+            cond, if_true, if_false = (
+                line[1],
+                merge_ifs(line[2]),
+                merge_ifs(path[idx + 1 :]),
+            )
             lines, merged = try_merge_ifs(cond, if_true, if_false)
             ret.extend(lines)
             ret.append(merged[:3])
@@ -563,28 +619,29 @@ def merge_ifs(path):
 
     return ret
 
+
 def fold_paths(for_merge):
-    
+
     if len(for_merge) == 0:
         return []
 
     if len(for_merge) == 1:
         return for_merge[0]
 
-    for_merge.sort(key = lambda r: -len(r))
+    for_merge.sort(key=lambda r: -len(r))
 
-    or_paths = ('or', ) + tuple(for_merge)
+    or_paths = ("or",) + tuple(for_merge)
 
     # merge beginnings
 
     idx = 0
-    while len(starting_with(or_paths, for_merge[0][:idx])) == len(for_merge): 
+    while len(starting_with(or_paths, for_merge[0][:idx])) == len(for_merge):
         idx += 1
 
     begin_offset = idx - 1
 
     # merge endings
-    
+
     idx = 1
     while len(ending_with(or_paths, for_merge[0][-idx:])) == len(for_merge):
         idx += 1
@@ -593,14 +650,16 @@ def fold_paths(for_merge):
 
     s_with = starting_with(or_paths, for_merge[0][:begin_offset])
     if end_offset > 0:
-        e_with = ending_with(('or', ) + tuple(s_with), for_merge[0][-end_offset:])
-        merged = for_merge[0][:begin_offset] + [ or_op(*e_with) ] + for_merge[0][-end_offset:]
+        e_with = ending_with(("or",) + tuple(s_with), for_merge[0][-end_offset:])
+        merged = (
+            for_merge[0][:begin_offset] + [or_op(*e_with)] + for_merge[0][-end_offset:]
+        )
     else:
-        merged = for_merge[0][:begin_offset] + [ or_op(*s_with) ]
+        merged = for_merge[0][:begin_offset] + [or_op(*s_with)]
 
     output = []
     for line in merged:
-        if opcode(line) != 'or':
+        if opcode(line) != "or":
             output.append(line)
 
         else:
@@ -626,7 +685,7 @@ def fold_paths(for_merge):
                         print()
                         pprint_logic(l[0])
                         raise
-#                        , (longest[0], shortest[0], l[0])
+                #                        , (longest[0], shortest[0], l[0])
 
                 # find two longest stretches that split the line or into exactly two parts
 
@@ -637,16 +696,20 @@ def fold_paths(for_merge):
                     for idx2 in range(1, len(longest)):
 
                         s2 = starting_with(line, longest[:idx2])
-                        if best == None and s1 == s2 and len(s1) + len(s2) + 1 == len(line):
+                        if (
+                            best is None
+                            and s1 == s2
+                            and len(s1) + len(s2) + 1 == len(line)
+                        ):
                             best = (idx1, idx2)
                             best_s = s1
 
                 if best is not None:
-                    return or_op(shortest[:best[0]], longest[:best[1]]), best_s
+                    return or_op(shortest[: best[0]], longest[: best[1]]), best_s
 
                 # cut the first line, merge the remaining paths if possible
-                s1 = starting_with(line, [ shortest[0] ])
-                s2 = starting_with(line, [ longest[0] ])
+                s1 = starting_with(line, [shortest[0]])
+                s2 = starting_with(line, [longest[0]])
 
                 s1 = fold_paths(s1)
                 s2 = fold_paths(s2)
@@ -654,8 +717,7 @@ def fold_paths(for_merge):
                 shorter_path = and_op(shortest[0], s1)
                 longer_path = and_op(longest[0], s2)
 
-                return ('or', ) + ( shorter_path, ) + (longer_path,) ,  []
-
+                return ("or",) + (shorter_path,) + (longer_path,), []
 
             ors, paths = fold_or(line)
 
