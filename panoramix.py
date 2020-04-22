@@ -2,7 +2,26 @@
 #   This is Panoramix.
 #
 
+import json
+import logging
+import os
+import random
 import sys
+import traceback
+from contextlib import redirect_stdout
+
+import coloredlogs
+import timeout_decorator
+
+import pano.folder as folder
+import various
+from pano.contract import Contract
+from pano.function import Function
+from pano.loader import Loader
+from pano.prettify import explain, pprint_repr, pprint_trace, pretty_type
+from pano.vm import VM
+from pano.whiles import make_whiles
+from utils.helpers import C, cache_fname, rewrite_trace
 
 if (sys.version_info[0], sys.version_info[1]) < (3, 8):
     print()
@@ -17,18 +36,6 @@ if (sys.version_info[0], sys.version_info[1]) < (3, 8):
 
     exit()
 
-import os
-import json
-from contextlib import redirect_stdout
-import random
-import traceback
-
-import pano.folder as folder
-
-from utils.helpers import rewrite_trace
-
-import coloredlogs
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -50,23 +57,6 @@ coloredlogs.install(
     field_styles={"asctime": {"color": "white", "faint": True}},
 )
 
-import timeout_decorator
-
-try:
-    import secret
-except:
-    with open("secret.py", "w+") as f:
-        f.write("#  a file for private api keys etc")
-
-
-import various
-from utils.helpers import C, cache_fname
-from pano.loader import Loader
-from pano.whiles import make_whiles
-from pano.function import Function
-from pano.vm import VM
-from pano.contract import Contract
-from pano.prettify import pprint_trace, pretty_type, pprint_repr, explain
 
 VER = "17 Feb 2020"
 

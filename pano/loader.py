@@ -3,7 +3,6 @@ import logging
 import os.path
 import traceback
 
-import secret
 from pano.matcher import match
 from utils.helpers import (
     COLOR_GRAY,
@@ -204,8 +203,8 @@ class Loader(EasyCopy):
             default = find_f(trace, find_default) if func_list else None
             self.add_func(default or 0, name="_fallback()")
 
-        except:
-            logger.error(f"Loader issues%s\n%s", ENDC, traceback.format_exc())
+        except Exception:
+            logger.exception("Loader issue.")
             self.add_func(0, name="_fallback()")
 
         abi = make_abi(self.hash_targets)
@@ -288,7 +287,7 @@ class Loader(EasyCopy):
                         try:
                             param = param * 0x100 + stack.pop()
                             line += 1
-                        except:
+                        except Exception:
                             break
 
             parsed_lines.append((orig_line, op, param))

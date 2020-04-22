@@ -1,14 +1,11 @@
-from copy import copy
 import logging
+from copy import copy
 
 import core.arithmetic as arithmetic
-
-from utils.helpers import opcode, to_exp2, EasyCopy
+from core.algebra import mask_op, neg_mask_op
 from core.masks import to_mask, to_neg_mask
-
-from core.algebra import neg_mask_op, mask_op
-
 from pano.prettify import prettify
+from utils.helpers import EasyCopy, opcode, to_exp2
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +93,6 @@ class Stack(EasyCopy):
 
         first = copy(self.stack)
         second = copy(latter.stack)
-        jumpdests = self.jump_dests(loader_jds)
 
         for idx, el in reversed(list(enumerate(copy(first)))):
             el2 = second[idx]
