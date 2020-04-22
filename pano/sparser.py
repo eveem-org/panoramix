@@ -202,14 +202,14 @@ def rewrite_functions(functions):
 
     defs = []
 
-    try:
-        sorted_keys = sorted(stordefs.keys())
-    except Exception:
-        logger.warn('unusual storage location')
-        sorted_keys = stordefs.keys()
+    def sort(it):
+        try:
+            return sorted(it)
+        except Exception:
+            return sorted(it, key=str)
 
-    for loc in sorted_keys:
-            for l in sorted(stordefs[loc], key=str):
+    for loc in sort(stordefs.keys()):
+            for l in sort(stordefs[loc]):
                 if match(l, ('stor', int, int, ('loc', Any))) or match(l, ('stor', int, int, ('name', ...))):
                     continue
 
@@ -221,15 +221,15 @@ def rewrite_functions(functions):
                     idx = m.idx
                     if opcode(idx) == 'map':
                         defs.append(('def', name, loc, ('mapping', get_type(stordefs[loc]))))
-                        break
                     elif opcode(idx) in ('array', 'length'):
                         defs.append(('def', name, loc, ('array', get_type(stordefs[loc]))))
-                        break
+
+                break
 
             # This is executed if we didn't add any defs in the loop above.
             else:
                 # all stor references are not arrays/maps, let's just print them out
-                for l in sorted(stordefs[loc], key=str):
+                for l in sort(stordefs[loc]):
                     name = get_name(l)
 
                     if name is None:
