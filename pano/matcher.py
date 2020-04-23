@@ -1,4 +1,5 @@
 import copy
+import builtins
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,10 @@ def _match_helper(expression, pattern, match):
 
     if isinstance(pattern, str) and pattern.startswith(":"):
         attr = pattern[1:]
+        if ":" in attr:
+            type_name, attr = attr.split(":")
+            if not isinstance(expression, getattr(builtins, type_name)):
+                raise NoMatch(expression, pattern)
         if hasattr(match, attr):
             if getattr(match, attr) == expression:
                 return
@@ -89,6 +94,12 @@ def match(expression, pattern):
     2
     >>> bool(match((1, 2, 3, 4), (tuple, ':two', ...)))
     False
+    >>> bool(match((1, 2, 3, 4), (int, ':int:two', ...)))
+    True
+    >>> bool(match((1, "two", 3, 4), (int, ':int:two', ...)))
+    False
+    >>> match(("one", "two", 3, 4), (str, ':str:two', ...)).two
+    'two'
     """
     m = Match()
     try:

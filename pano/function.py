@@ -83,15 +83,13 @@ class Function(EasyCopy):
 
     def cleanup_masks(self, trace):
         def rem_masks(exp):
-            if m := match(exp, ("bool", ("cd", ":idx"))):
+            if m := match(exp, ("bool", ("cd", ":int:idx"))):
                 idx = m.idx
-                assert type(idx) == int
                 if idx in self.params and self.params[idx][0] == "bool":
                     return ("cd", idx)
 
-            elif m := match(exp, ("mask_shl", ":size", 0, 0, ("cd", ":idx"))):
+            elif m := match(exp, ("mask_shl", ":size", 0, 0, ("cd", ":int:idx"))):
                 size, idx = m.size, m.idx
-                assert type(idx) == int
                 if idx in self.params:
                     kind = self.params[idx][0]
                     def_size = type_to_mask(kind)
