@@ -226,7 +226,7 @@ def decompile(this_addr, only_func_name=None):
             if target > 1 and loader.lines[target][1] == "jumpdest":
                 target += 1
 
-            @timeout_decorator.timeout(30, use_signals=True)  # 180 used in production
+            @timeout_decorator.timeout(120, use_signals=True)
             def dec():
                 trace = VM(loader).run(target, stack=stack)
                 explain("Initial decompiled trace", trace[1:])
