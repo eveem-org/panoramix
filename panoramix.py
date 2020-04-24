@@ -369,10 +369,10 @@ def decompile(this_addr, only_func_name=None):
             key=lambda f: f.priority()
         )  # sort func list by length, with some caveats
 
-        if shown_already and any(1 for f in func_list if f.hash not in shown_already):
-            # otherwise no irregular functions, so this is not needed :)
-            print(C.gray + "#\n#  Regular functions\n#" + C.end + "\n")
-
+        if any(1 for f in func_list if f.hash not in shown_already):
+            if shown_already:
+                # otherwise no irregular functions, so this is not needed :)
+                print(C.gray + "#\n#  Regular functions\n#" + C.end + "\n")
         else:
             print(
                 "\n"
