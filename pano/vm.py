@@ -108,16 +108,6 @@ class Node:
         stack_obj = Stack(stack)
         self.jd = (start, len(stack), tuple(stack_obj.jump_dests(loader_dests)))
 
-    def apply_vars(var_list):
-        for orig_name, new_name in var_list:
-            assert match(orig_name, ("var", ":name"))
-            assert match(new_name, ("var", int))
-
-            self.trace = replace(self.trace, orig_name, new_name)
-
-            for n in self.next:
-                n.apply_vars(var_list)
-
     def make_trace(self):
         if self.trace is None:
             return ["nil"]
@@ -699,7 +689,6 @@ class VM(EasyCopy):
 
         elif op == "mload":
             memloc = stack.pop()
-            loaded = mem_load(memloc)
 
             self.counter += 1
             vname = f"_{self.counter}"

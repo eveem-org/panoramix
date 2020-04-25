@@ -571,7 +571,6 @@ def pretty_line(r, add_color=True):
         gas = pretty_gas(gas, wei, add_color)
 
         if fname is not None:
-            fanme = fname
             fname = pretty_fname(fname, add_color=add_color)
 
             if fname == "0x0":
