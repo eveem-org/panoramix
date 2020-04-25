@@ -237,11 +237,11 @@ class VM(EasyCopy):
                 self.expand_trace(root)
 
                 """
-                     find all the jumps that lead to an already
-                     reached jumpdest (with similar stack, otherwise
-                     we'd catch function calls as all).
+                    find all the jumps that lead to an already
+                    reached jumpdest (with similar stack, otherwise
+                    we'd catch function calls as all).
 
-                     replace them with 'loop' identifier
+                    replace them with 'loop' identifier
                 """
 
                 self.replace_loops(root)
@@ -461,9 +461,6 @@ class VM(EasyCopy):
                     and isinstance(m.fx_hash, int)
                 ):
                     n_true.trace = [("funccall", m.fx_hash, target, tuple_stack)]
-
-            if_true = ("jump", n_true)
-            if_false = ("jump", n_false)
 
             bool_condition = arithmetic.eval_bool(
                 if_condition, condition, symbolic=False

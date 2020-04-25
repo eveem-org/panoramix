@@ -102,7 +102,6 @@ class Loader(EasyCopy):
         assure_dir_exists("cache_stdin")
 
         fname = f"cache_stdin/{hash_id}.bin"
-        address = hash_id
         self.addr = hash_id
         with open(fname) as f:
             code = f.read()
@@ -158,8 +157,6 @@ class Loader(EasyCopy):
             with open(cache_fname, "w+") as f:
                 f.write(code)
 
-            fname = cache_fname
-
         self.load_binary(code)
 
     def run(self, vm):
@@ -207,7 +204,6 @@ class Loader(EasyCopy):
             logger.exception("Loader issue.")
             self.add_func(0, name="_fallback()")
 
-        abi = make_abi(self.hash_targets)
         for hash, (target, stack) in self.hash_targets.items():
             fname = get_func_name(hash)
             self.func_list.append((hash, fname, target, stack))
