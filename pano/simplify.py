@@ -139,7 +139,7 @@ def simplify_trace(trace):
         # time to explain. if you play with it, just run through bulk_compare.py
         # and see how it affects the code.
 
-    
+
     # final lightweight postprocessing
     # introduces new variables, simplifies code for human readability
     # and does other stuff that would break the above loop
@@ -217,7 +217,7 @@ def simplify_exp(exp):
                 return ('mask_shl', size, 0, 0, ('cd', num)) # calldata params are left-padded usually, it seems
 
     if exp ~ ('bool', ('bool', :e)):
-        exp = ('bool', e)    
+        exp = ('bool', e)
 
     if exp ~ ('eq', :sth, 0) or \
        exp ~ ('eq', 0, sth):
@@ -263,7 +263,7 @@ def simplify_exp(exp):
 
     if exp ~ ('mask_shl', :size, 0, 0, ('div', :expr, ('exp', 256, :shr))):
         exp = mask_op(simplify_exp(expr), size, 0, shr=bits(shr))
-        
+
     if exp ~ ('mask_shl', _, _, :shl, ('storage', :size, _, _)) and \
         safe_le_op(size, minus_op(shl)):
         return 0
@@ -568,7 +568,7 @@ def readability(trace):
 
             # if if_false ~ [('revert', ...)]: # no lists in Tilde... yet :,)
             if len(if_false) == 1 and opcode(if_false[0]) == 'revert':
-                res.append(('if', is_zero(cond), readability(if_false), readability(if_true))) 
+                res.append(('if', is_zero(cond), readability(if_false), readability(if_true)))
             else:
                 res.append(('if', cond, readability(if_true), readability(if_false)))
             continue
@@ -828,10 +828,10 @@ def _loop_to_setmem(line):
             return None
 
         val_rng, val_diff = memidx_to_memrange(mem_val_idx, setvars, stepvars, endvars)
-        
+
         if val_rng is None:
             return None
-        
+
         if val_diff != diff:
             return None # possible but unsupported
 
@@ -980,7 +980,7 @@ def cleanup_conds(trace):
             # because we're truncating mask256. it should really be
             # mask(256, stor0) <= mask(256, stor0 + 1)
             # which is not always true
-            # see 0x014B50466590340D41307Cc54DCee990c8D58aa8.transferFrom 
+            # see 0x014B50466590340D41307Cc54DCee990c8D58aa8.transferFrom
             path = cleanup_conds(path)
             ev = arithmetic.eval_bool(cond, symbolic=False)
             if ev is True:
@@ -1201,7 +1201,7 @@ assert affects(line_test, exp_test) == True
 
 
 '''
-    
+
     Memory cleanup
 
 '''
@@ -1276,7 +1276,7 @@ def cleanup_mems(trace, in_loop=False):
 
         elif line ~ ('setmem', :mem_idx, :mem_val):
             # find all the future occurences of var and replace if possible
-            if not affects(line, mem_val): 
+            if not affects(line, mem_val):
                 remaining_trace = replace_mem(trace[idx+1:], mem_idx, mem_val)
             else:
                 remaining_trace = trace[idx+1:]
@@ -1639,7 +1639,7 @@ def normalize(cond):
     vars_right = find_op_list(right, 'var')
 
     left_vars = tuple([e for e in vars_left if e ~ ('var', int)]) # int = loop vars
-    right_vars = tuple([e for e in vars_right if e ~ ('var', int)]) 
+    right_vars = tuple([e for e in vars_right if e ~ ('var', int)])
 
     if len(left_vars) + len(right_vars) != 1:
         return None
@@ -1933,8 +1933,11 @@ def parse_counters(line):
 
     a['stepvars'] = stepvars
 
-    counter = cond[1][1] 
+    counter = cond[1][1]
     counter_stop = cond[2]
+    if counter not in startvars:
+        logger.warning("counter %s not in %s", counter, startvars)
+        return {}
     counter_start = startvars[counter]
     a['counter'] = counter
     a['start'] = counter_start
