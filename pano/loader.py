@@ -204,6 +204,8 @@ class Loader(EasyCopy):
             logger.exception("Loader issue.")
             self.add_func(0, name="_fallback()")
 
+
+        make_abi(self.hash_targets)
         for hash, (target, stack) in self.hash_targets.items():
             fname = get_func_name(hash)
             self.func_list.append((hash, fname, target, stack))

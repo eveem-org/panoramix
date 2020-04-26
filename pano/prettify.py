@@ -937,7 +937,7 @@ def prettify(exp, rem_bool=False, parentheses=True, top_level=False, add_color=F
     if (
         m := match(exp, ("arr", ":int:num", ("mask_shl", Any, Any, Any, ":str:s")))
     ) and len(m.s) == m.num + 2:
-        return s
+        return m.s
 
     if m := match(exp, ("param", ":name")):
         return col(m.name, COLOR_GREEN)
@@ -954,7 +954,7 @@ def prettify(exp, rem_bool=False, parentheses=True, top_level=False, add_color=F
             col("Array(len=", COLOR_GRAY)
             + pret(l)
             + col(", data=", COLOR_GRAY)
-            + pret(("data",) + terms)
+            + pret(("data",) + tuple(terms))
             + col(")", COLOR_GRAY)
         )
 
