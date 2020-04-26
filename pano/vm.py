@@ -70,7 +70,7 @@ def find_nodes(node, f):
     return res
 
 
-MAX_NODE_COUNT = 100_000
+MAX_NODE_COUNT = 10_000
 node_count = 0
 
 
