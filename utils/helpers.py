@@ -2,7 +2,6 @@
 import string
 
 from copy import deepcopy, copy
-from .profiler import *
 
 import os
 import re
@@ -179,7 +178,7 @@ def assure_dir_exists(dir_name):
 
     dir_so_far = ''
     for d in dir_name.split('/'):
-        dir_so_far += d + '/' 
+        dir_so_far += d + '/'
         if not os.path.isdir(dir_so_far):
             os.mkdir(dir_so_far)
 

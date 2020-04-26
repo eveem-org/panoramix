@@ -20,7 +20,6 @@ from .helpers import (
     colorize,
     opcode,
 )
-from .profiler import checkpoint
 from .supplement import fetch_sigs
 
 _abi = None

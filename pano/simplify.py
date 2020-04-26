@@ -19,8 +19,6 @@ from pano.prettify import pformat_trace, pprint_trace, pprint_repr
 
 from .postprocess import cleanup_mul_1
 
-from utils.profiler import checkpoint, checkpoint_start, log_checkpoints, func_caller
-
 from core.masks import get_bit
 
 from core.masks import to_mask, to_neg_mask

@@ -6,8 +6,6 @@ from pano.matcher import match, Any
 
 import sys
 
-from utils.profiler import checkpoint, checkpoint_start
-
 logger = logging.getLogger(__name__)
 
 logger.level = logging.CRITICAL# INFO

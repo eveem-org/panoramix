@@ -16,7 +16,6 @@ from utils.helpers import (
     pretty_bignum,
 )
 from utils.opcode_dict import opcode_dict
-from utils.profiler import checkpoint
 from utils.signatures import get_func_name, make_abi
 from utils.supplement import fetch_sig
 
@@ -120,7 +119,6 @@ class Loader(EasyCopy):
 
         self.addr = address
 
-        fname = None
         code = None
 
         dir_name = "cache_code/" + address[:5] + "/"

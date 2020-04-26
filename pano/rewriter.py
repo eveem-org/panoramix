@@ -17,18 +17,11 @@ from core.arithmetic import is_zero, to_real_int
 
 from pano.prettify import pformat_trace, pprint_trace
 
-from utils.profiler import checkpoint, checkpoint_start, print_checkpoints, func_caller
-
 from core.masks import get_bit
 
 from time import gmtime, strftime
 
 from core.masks import to_mask, to_neg_mask
-
-import utils.profiler
-
-from utils.profiler import *
-
 
 '''
 
