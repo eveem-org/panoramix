@@ -1,4 +1,5 @@
 import logging
+import time
 import sys
 from copy import copy
 
@@ -69,6 +70,7 @@ def find_nodes(node, f):
     return res
 
 
+MAX_NODE_COUNT = 100_000
 node_count = 0
 
 
@@ -85,11 +87,6 @@ class Node:
         global node_count
 
         node_count += 1
-        #        if node_count % 1000 == 0:
-        #            print(node_count)
-
-        if node_count > 100_000:
-            raise RuntimeError("Too many nodes / function too big.")
 
         self.vm = vm
         self.prev = []
@@ -110,7 +107,7 @@ class Node:
 
     def make_trace(self):
         if self.trace is None:
-            return ["nil"]
+            return ["...unterminated..."]
 
         begin_vars = []
         if self.is_label():
@@ -203,7 +200,11 @@ class VM(EasyCopy):
         global node_count
         node_count = 0
 
-    def run(self, start, history={}, condition=None, re_run=False, stack=()):
+    def run(self, start, history={}, condition=None, re_run=False, stack=(), timeout=0):
+        time_start = time.monotonic()
+
+        def should_quit():
+            return node_count > MAX_NODE_COUNT or (timeout and (time.monotonic() - time_start > timeout))
 
         func_node = Node(vm=self, start=start, safe=True, stack=list(stack))
         trace = [
@@ -254,7 +255,7 @@ class VM(EasyCopy):
 
                 nodes = find_nodes(root, lambda n: n.trace is None)
 
-                if len(nodes) == 0:
+                if len(nodes) == 0 or should_quit():
                     break
 
             trace = self.continue_loops(root)
@@ -262,8 +263,12 @@ class VM(EasyCopy):
             tr = root.make_trace()
             nodes = find_nodes(root, lambda n: n.trace is None)
 
-            if len(nodes) == 0:
+            if len(nodes) == 0 or should_quit():
                 break
+
+        if should_quit():
+            logger.warning("VM stopped prematurely. Node count %i and seconds %i.",
+                           node_count, time.monotonic() - time_start)
 
         tr = root.make_trace()
         return tr

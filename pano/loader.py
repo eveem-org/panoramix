@@ -26,6 +26,8 @@ cache_sigs = {
     False: {},
 }
 
+LOADER_TIMEOUT = 60
+
 
 def code_fetch(address, network="mainnet"):
     assert (
@@ -165,7 +167,7 @@ class Loader(EasyCopy):
             # and running VM in a special mode that returns 'funccall'
             # in places where it looks like there is a func call
 
-            trace = vm.run(0)
+            trace = vm.run(0, timeout=LOADER_TIMEOUT)
 
             def func_calls(exp):
                 if m := match(exp, ("funccall", ":fx_hash", ":target", ":stack")):
