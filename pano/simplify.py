@@ -4,6 +4,7 @@ from copy import copy
 import core.arithmetic as arithmetic
 import logging
 import collections
+from pano.matcher import Any, match
 
 from core.memloc import range_overlaps, splits_mem, fill_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store
 
@@ -159,18 +160,16 @@ def simplify_trace(trace):
 
 
     def fix_storages(exp):
-        if exp ~ ('storage', :size, int:off, :loc) and off < 0:
-            return ('storage', size, 0, loc)
+        if (m := match(exp, ('storage', ':size', ':int:off', ':loc'))) and m.off < 0:
+            return ('storage', m.size, 0, m.loc)
         return exp
 
     trace = replace_f(trace, fix_storages)
     trace = cleanup_conds(trace)
     explain('cleaning up storages slightly', trace)
 
-
     trace = readability(trace)
     explain('adding nicer variable names', trace)
-
 
     trace = cleanup_mul_1(trace)
 
@@ -187,7 +186,8 @@ def simplify_exp(exp):
         exp = ('mask_shl', 251, 5, 0, exp) # mathematically incorrect, but this appears as an artifact of other
                                             # ops often.
 
-    if exp ~ ('and', *terms):
+    if opcode(exp) == 'and':
+        _, *terms = exp
         real = 2**256-1
         symbols = []
         for t in terms:
@@ -206,20 +206,18 @@ def simplify_exp(exp):
         res += tuple(symbols)
         exp = ('and', ) + res
 
-    if exp ~ ('data', *terms) and \
-        all([t == 0 for t in terms]):
+    if opcode(exp) == 'data' and all(t == 0 for t in exp[1:]):
             return 0
 
     if exp ~ ('mask_shl', int:size, int:off, -off, ('cd', int:num)) and \
             size in (8, 16, 32, 64, 128) and off > 0:
                 return ('mask_shl', size, 0, 0, ('cd', num)) # calldata params are left-padded usually, it seems
 
-    if exp ~ ('bool', ('bool', :e)):
-        exp = ('bool', e)
+    if m := match(exp, ('bool', ('bool', ':e'))):
+        exp = ('bool', m.e)
 
-    if exp ~ ('eq', :sth, 0) or \
-       exp ~ ('eq', 0, sth):
-            exp = ('iszero', sth)
+    if (m := match(exp, ('eq', ':sth', 0))) or (m := match(exp, ('eq', 0, ':sth'))):
+            exp = ('iszero', m.sth)
 
     if exp ~ ('mask_shl', int:size, 5, 0, ('add', int:num, *terms)) and \
             size > 240 and num % 32 == 31 and num > 32:
