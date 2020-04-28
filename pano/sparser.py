@@ -1,6 +1,7 @@
 # coding: tilde
 
 from pano.prettify import pprint_trace, pretty_stor
+from pano.matcher import match, Any
 
 from utils.helpers import opcode, find_f, replace, replace_f, tuplify, replace_lines, get_op, hashable,  to_exp2
 
@@ -30,11 +31,11 @@ def get_loc(exp):
                                      # don't follow this one when looking for loc
             return None
 
-        elif exp ~ ('loc', :num):
-            return num
+        elif m := match(exp, ('loc', ':num')):
+            return m.num
 
-        elif exp ~ ('name', _, :num):
-            return num
+        elif m := match(exp, ('name', Any, ':num')):
+            return m.num
 
         else:
             for e in exp:
@@ -43,20 +44,20 @@ def get_loc(exp):
 
             return None
 
-    if exp ~ ('type', _, ('field', _, :m_idx)):
-        exp = m_idx
+    if m := match(exp, ('type', Any, ('field', Any, ':m_idx'))):
+        exp = m.m_idx
 
-    if exp ~ ('storage', _, _, :e):
-        exp = e
+    if m := match(exp, ('storage', Any, Any, ':e')):
+        exp = m.e
 
-    if exp ~ ('stor', _, _, :e):
-        exp = e
+    if m := match(exp, ('stor', Any, Any, ':e')):
+        exp = m.e
 
-    if exp ~ ('stor', :e):
-        exp = e
-
+    if m := match(exp, ('stor', ':e')):
+        exp = m.e
 
     return f(exp)
+
 
 def get_name_full(exp):
     def f(exp):
@@ -96,17 +97,16 @@ def get_name(exp):
     if r is None:
         return None
     else:
-        assert r ~ ('name', :name, _)
-        return name
+        return match(r, ('name', ':name', Any)).name
 
 
 def find_stores(exp):
 
     if exp ~ ('store', :size, :off, :idx, :val):
-        res = set([('storage', size, off, idx)])
+        res = {('storage', size, off, idx)}
 
-    elif exp ~ ('storage', ...):
-        res = set([exp])
+    elif exp ~ ('storage', _, _, _):
+        res = {exp}
 
     else:
         res = set()
@@ -157,7 +157,7 @@ def rewrite_functions(functions):
     stordefs = {}
 
     for src, dest in storages_assoc.items():
-        d = dest       
+        d = dest
         loc = get_loc(d)
         if loc is None: loc = 99
 
@@ -202,36 +202,34 @@ def rewrite_functions(functions):
 
     defs = []
 
-    try:
-        sorted_keys = sorted(stordefs.keys())
-    except:
-        logger.warn('unusual storage location')
-        sorted_keys = stordefs.keys()
+    def sort(it):
+        try:
+            return sorted(it)
+        except Exception:
+            return sorted(it, key=str)
 
-    for loc in sorted_keys:
-            for l in stordefs[loc]:
-                if (l ~ ('stor', int, int, ('loc', _))) or \
-                   (l ~ ('stor', int, int, ('name', ...))):
-                   pass
+    for loc in sort(stordefs.keys()):
+            for l in sort(stordefs[loc]):
+                if match(l, ('stor', int, int, ('loc', Any))) or match(l, ('stor', int, int, ('name', ...))):
+                    continue
 
-                else:
-                    name = get_name(l)
-                    if name is None:
-                        name = 'stor' + str(loc)
+                name = get_name(l)
+                if name is None:
+                    name = 'stor' + str(loc)
 
-                    assert l ~ ('stor', int, int, :idx)
-
+                if m := match(l, ('stor', int, int, ':idx')):
+                    idx = m.idx
                     if opcode(idx) == 'map':
                         defs.append(('def', name, loc, ('mapping', get_type(stordefs[loc]))))
                     elif opcode(idx) in ('array', 'length'):
                         defs.append(('def', name, loc, ('array', get_type(stordefs[loc]))))
-                    else:
-                        pass # it's length probably
 
-                    break
+                break
+
+            # This is executed if we didn't add any defs in the loop above.
             else:
                 # all stor references are not arrays/maps, let's just print them out
-                for l in stordefs[loc]:
+                for l in sort(stordefs[loc]):
                     name = get_name(l)
 
                     if name is None:
@@ -265,8 +263,8 @@ def repl_stor(exp, assoc):
     if type(exp) == list:
         return [repl_stor(e, assoc) for e in exp]
 
-    if exp ~ ('store', :size, :off, :idx, :val):
-
+    if opcode(exp) == "store":
+        _, size, off, idx, val = exp
         dest = assoc[('storage', size, off, idx)]
         return ('store', ) + dest[1:] + (repl_stor(val, assoc), )
 
@@ -307,10 +305,10 @@ def replace_names_in_assoc_bool(names, storages_assoc):
 def replace_names_in_assoc(names, storages_assoc):
     for pattern, name in names.items():
 
-        if pattern ~ ('bool', ...):
+        if opcode(pattern) == 'bool':
             continue
 
-        if pattern ~ ('struct', ...):
+        if opcode(pattern) == 'struct':
             stor_id = pattern
         else:
             stor_id = storages_assoc[pattern]
@@ -320,8 +318,8 @@ def replace_names_in_assoc(names, storages_assoc):
             # we need to check first if a given location is only accessed
             # this way. otherwise it may be a function like getLength, that
             # returns the array length, and we don't want to use it as a storage name
-            if all([pattern ~ ('stor', _, _, ('loc', _)) \
-                    for pattern in storages_assoc if get_loc(pattern) == num]):
+            if all(match(pattern, ('stor', Any, Any, ('loc', Any))) \
+                   for pattern in storages_assoc if get_loc(pattern) == num):
 
                 used_locs.add(stor_id)
 
@@ -379,7 +377,7 @@ def find_storage_names(functions):
 
             new_name = new_name.split('(')[0]
 
-            if getter ~ ('storage', 160, ...):
+            if match(getter, ('storage', 160, ...)):
                 if ('address' not in new_name.lower()) and \
                    ('addr' not in new_name.lower()) and \
                    ('account' not in new_name.lower()) and \
@@ -480,7 +478,7 @@ def _sparser(orig_storages):
     storages = res
 
     '''
-        
+
         array is when you add to a loc
 
     '''
@@ -508,7 +506,7 @@ def _sparser(orig_storages):
         assert s ~ ('stor', :size, :offset, :idx)
 
         idx ~ ('add', :idx)
-        
+
         if idx ~ ('add', ...) and get_loc(idx) is None:
             if idx ~ ('add', int:loc, :pos):
                 s = ('stor', size, offset, ('array', pos, ('loc', loc)))
@@ -520,7 +518,7 @@ def _sparser(orig_storages):
     storages = res
 
     '''
-        
+
         convert regular storages into lengths or locs
 
         that is - find all the idxs that (stor _ _ idx) exists
@@ -615,7 +613,7 @@ def _sparser(orig_storages):
         res[s] = dst
 
     '''
-    
+
         and replace storage definitions in it recursively
 
     '''

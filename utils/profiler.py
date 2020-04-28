@@ -1,19 +1,24 @@
 try:
     from time import perf_counter_ns
+
     def time_ns():
         return perf_counter_ns()
+
+
 except:
     # python < 3.7
     from time import perf_counter
+
     def time_ns():
         return int(perf_counter() * (1000000))
+
 
 import sys
 import logging
 
 logger = logging.getLogger(__name__)
 
-'''
+"""
     a simplified line by line profiler
 
     usage:
@@ -50,11 +55,12 @@ logger = logging.getLogger(__name__)
     shows time spent in some_func, split by the time
     when it was called by func_a and func_b
 
-'''
+"""
 
 results = {}
-last_checkpoint = ''
+last_checkpoint = ""
 last_ns = time_ns()
+
 
 def checkpoint(name):
     global results
@@ -78,14 +84,17 @@ def checkpoint_start():
 def log_checkpoints():
     return
     for name, elapsed in results.items():
-        logger.info(f'Profiler: {name}\t\t- {elapsed / 1000000000}')
+        logger.info(f"Profiler: {name}\t\t- {elapsed / 1000000000}")
 
     for name, elapsed in counters.items():
-        logger.info(f'Profiler: {name}\t\t- {elapsed}')
+        logger.info(f"Profiler: {name}\t\t- {elapsed}")
 
-print_checkpoints=log_checkpoints
+
+print_checkpoints = log_checkpoints
 
 counters = {}
+
+
 def count(x):
     if x in counters:
         counters[x] += 1
