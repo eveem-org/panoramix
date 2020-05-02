@@ -30,7 +30,6 @@ from utils.helpers import (
 
 from .stack import Stack, fold_stacks
 
-loader_dests = None
 logger = logging.getLogger(__name__)
 
 
@@ -103,7 +102,7 @@ class Node:
         self.condition = condition
 
         stack_obj = Stack(stack)
-        self.jd = (start, len(stack), tuple(stack_obj.jump_dests(loader_dests)))
+        self.jd = (start, len(stack), tuple(stack_obj.jump_dests(vm.loader.jump_dests)))
 
     def make_trace(self):
         if self.trace is None:
@@ -185,9 +184,6 @@ class Node:
 
 class VM(EasyCopy):
     def __init__(self, loader, just_fdests=False):
-
-        global loader_dests
-        loader_dests = loader.jump_dests
 
         self.loader = loader
 
