@@ -2,6 +2,7 @@ import hashlib
 import json
 import os.path
 import sys
+import logging
 
 from pano.matcher import Any, match
 
@@ -21,6 +22,8 @@ from .helpers import (
     opcode,
 )
 from .supplement import fetch_sigs
+
+logger = logging.getLogger(__name__)
 
 _abi = None
 _func = None
@@ -155,7 +158,7 @@ def match_score(func, hashes):
 def make_abi(hash_targets):
     global _abi
 
-    hash_name = str(list(hash_targets.keys())).encode("utf-8")
+    hash_name = str(sorted(list(hash_targets.keys()))).encode("utf-8")
     hash_name = hashlib.sha256(hash_name).hexdigest()
 
     dir_name = (
@@ -176,8 +179,7 @@ def make_abi(hash_targets):
 
         return _abi
 
-    if "--silent" not in sys.argv:
-        print("cache for PABI not found, generating...")
+    logger.info("Cache for PABI not found, generating...")
 
     hashes = list(hash_targets.keys())
 
@@ -219,5 +221,7 @@ def make_abi(hash_targets):
 
     with open(cache_fname, "w+") as f:
         f.write(json.dumps(result, indent=2))
+
+    logger.info("Cache for PABI generated.")
 
     return result
