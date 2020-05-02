@@ -176,7 +176,7 @@ def make_abi(hash_targets):
     if os.path.isfile(cache_fname):
         with open(cache_fname) as f:
             _abi = json.loads(f.read())
-
+        logger.info("Cache for PABI found.")
         return _abi
 
     logger.info("Cache for PABI not found, generating...")

@@ -400,7 +400,7 @@ def replace_lines(trace, f):
 
             res.append(("while", cond, path, jds, setvars))
 
-        elif opcode(line) == "if":
+        elif opcode(line) == "if" and len(line) == 4:
             _, cond, if_true, if_false = line
             res.append(
                 ("if", f(cond), replace_lines(if_true, f), replace_lines(if_false, f))
