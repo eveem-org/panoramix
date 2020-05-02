@@ -1,39 +1,84 @@
-# coding: tilde
-
-from copy import copy
-import core.arithmetic as arithmetic
-import logging
 import collections
-from pano.matcher import match, Any
-
-from core.memloc import range_overlaps, splits_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store, sizeof
-
-from utils.helpers import contains, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_f_set, find_f_list, rewrite_trace, rewrite_trace_full, replace_f, is_array
-
-from core.algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add, divisible_bytes, _max_op
-from core.algebra import add_op, bits, mul_op, get_sign, safe_ge_zero, ge_zero, lt_op, safe_lt_op, safe_le_op, simplify_max, le_op, max_op, safe_max_op, safe_min_op, min_op, or_op, neg_mask_op, mask_op, apply_mask_to_storage, apply_mask, try_add, to_bytes
-
-from core.arithmetic import is_zero, to_real_int
-
-from pano.prettify import pformat_trace, pprint_trace
-
-from core.masks import get_bit
-
+import logging
+from copy import copy
 from time import gmtime, strftime
 
-from core.masks import to_mask, to_neg_mask
+import core.arithmetic as arithmetic
+from core.algebra import (
+    _max_op,
+    add_ge_zero,
+    add_op,
+    apply_mask,
+    apply_mask_to_storage,
+    bits,
+    calc_max,
+    divisible_bytes,
+    flatten_adds,
+    ge_zero,
+    get_sign,
+    le_op,
+    lt_op,
+    mask_op,
+    max_op,
+    max_to_add,
+    min_op,
+    minus_op,
+    mul_op,
+    neg_mask_op,
+    or_op,
+    safe_ge_zero,
+    safe_le_op,
+    safe_lt_op,
+    safe_max_op,
+    safe_min_op,
+    simplify,
+    simplify_max,
+    sub_op,
+    to_bytes,
+    try_add,
+)
+from core.arithmetic import is_zero, to_real_int
+from core.masks import get_bit, to_mask, to_neg_mask
+from core.memloc import (
+    apply_mask_to_range,
+    memloc_overwrite,
+    range_overlaps,
+    sizeof,
+    split_setmem,
+    split_store,
+    splits_mem,
+)
+from pano.matcher import Any, match
+from pano.prettify import pformat_trace, pprint_trace
+from utils.helpers import (
+    cached,
+    contains,
+    find_f_list,
+    find_f_set,
+    is_array,
+    opcode,
+    replace,
+    replace_f,
+    rewrite_trace,
+    rewrite_trace_full,
+    rewrite_trace_multiline,
+    to_exp2,
+    walk_trace,
+)
 
-'''
+
+"""
 
     Some nasty last-minute hacks and heurestics I wrote to finally get the April release to production.
 
     One of the very few places in Panoramix that are blatantly mathematically incorrect, but
     help to make a ton of contracts way more readable (and - in practice - being always valid)
 
-'''
+"""
+
 
 def postprocess_exp(exp):
-    if opcode(exp) == 'data':
+    if opcode(exp) == "data":
         terms = exp[1:]
         # make arrays in data
         concrete = [t for t in terms if type(t) == int and t % 32 == 0]
@@ -42,30 +87,62 @@ def postprocess_exp(exp):
             assert concrete[0] % 32 == 0
             loc = concrete[0] // 32
             if loc + 1 < len(terms) and loc > terms.index(concrete[0]):
-                arr = ('arr', ) + terms[loc:]
+                arr = ("arr",) + terms[loc:]
 
-    # heuristics for cleaning up various misprocessed stuff
+                # heuristics for cleaning up various misprocessed stuff
 
-                if (m := match(arr, ('arr', ':l', (':op', Any, ':l'), ...))) and is_array(m.op):
+                if (
+                    m := match(arr, ("arr", ":l", (":op", Any, ":l"), ...))
+                ) and is_array(m.op):
                     arr = arr[:3]
 
-                elif (m := match(arr, ('arr', ':l', ('mask_shl', ('mask_shl', 253, 0, 3, ':l'), Any, Any, ('data', (':op', ':st', ':l'), ...), ...)))) and is_array(m.op):
-                    arr = ('arr', m.l, (m.op, m.st, m.l))
+                elif (
+                    m := match(
+                        arr,
+                        (
+                            "arr",
+                            ":l",
+                            (
+                                "mask_shl",
+                                ("mask_shl", 253, 0, 3, ":l"),
+                                Any,
+                                Any,
+                                ("data", (":op", ":st", ":l"), ...),
+                                ...,
+                            ),
+                        ),
+                    )
+                ) and is_array(m.op):
+                    arr = ("arr", m.l, (m.op, m.st, m.l))
 
-                t2 = tuple([arr if t == loc*32 else t for t in terms[:loc]])
-                return ('data', ) + t2
+                t2 = tuple([arr if t == loc * 32 else t for t in terms[:loc]])
+                return ("data",) + t2
 
     # this would really require debugging as to why such thing happens, and a nicer cleanup.
     # but it's last minute fixes again :)
 
-    if m := match(exp, ('arr', ':l', ('mask_shl', ('mask_shl', Any, 0, 3, ':l'), ('add', 256, Any), ('add', -256, Any), ('data', ('call.data', ':s', ':l'), ...), ...))):
-       return ('arr', m.l, ('call.data', m.s, m.l))
+    if m := match(
+        exp,
+        (
+            "arr",
+            ":l",
+            (
+                "mask_shl",
+                ("mask_shl", Any, 0, 3, ":l"),
+                ("add", 256, Any),
+                ("add", -256, Any),
+                ("data", ("call.data", ":s", ":l"), ...),
+                ...,
+            ),
+        ),
+    ):
+        return ("arr", m.l, ("call.data", m.s, m.l))
 
     return exp
 
 
 def postprocess_trace(line):
-    '''
+    """
         let's find all the stuff like
 
          if (some_len % 32) == 0:
@@ -79,15 +156,19 @@ def postprocess_trace(line):
         in theory this is incorrect, because perhaps program does something totally different
         in the one branch, andd something entirely different in another.
         but this cleans up tremendous amounts of output, and didn't find a counterexample yet.
-    '''
+    """
 
-#    if line ~ ('setmem', ('range', :s, ('mask_shl', 251, 5, 0, ('add', 31, ('cd', ('add', 4, :param))))), ('data', ('call.data', ('add', 36, param), ('cd', ('add', 4, param))), ('mem', ...))):
-#        lin = ('setmem', ('range', s, ('cd', ('add', 4, param))), ('call.data', ('add', 36, param), ('cd', ('add', 4, param))))
-#        return [lin]
+    #    if line ~ ('setmem', ('range', :s, ('mask_shl', 251, 5, 0, ('add', 31, ('cd', ('add', 4, :param))))), ('data', ('call.data', ('add', 36, param), ('cd', ('add', 4, param))), ('mem', ...))):
+    #        lin = ('setmem', ('range', s, ('cd', ('add', 4, param))), ('call.data', ('add', 36, param), ('cd', ('add', 4, param))))
+    #        return [lin]
 
-    if line ~ ('if', ('iszero', ('storage', 5, 0, :l)), :if_true, :if_false):
+    if m := match(
+        line, ("if", ("iszero", ("storage", 5, 0, ":l")), ":if_true", ":if_false")
+    ):
+        l, if_true, if_false = m.l, m.if_true, m.if_false
+
         def find_arr_l(exp):
-            if exp ~ ('arr', ('storage', 256, 0, l), ...):
+            if match(exp, ("arr", ("storage", 256, 0, l), ...)):
                 return [exp]
 
         true_arr = find_f_list(if_true, find_arr_l)
@@ -96,19 +177,22 @@ def postprocess_trace(line):
         if len(true_arr) > 0 and len(true_arr) == len(false_arr):
             return if_true
 
+    if m := match(
+        line, ("if", ("iszero", ("mask_shl", 5, 0, 0, ":l")), ":if_true", ":if_false")
+    ):
+        l, if_true, if_false = m.l, m.if_true, m.if_false
 
-    if line ~ ('if', ('iszero', ('mask_shl', 5, 0, 0, :l)), :if_true, :if_false):
         def find_arr_l(exp):
-            if exp ~ ('arr', l, ...):
+            if match(exp, ("arr", l, ...)):
                 return [exp]
+
         true_arr = find_f_list(if_true, find_arr_l)
         false_arr = find_f_list(if_true, find_arr_l)
 
         if len(true_arr) > 0 and len(true_arr) == len(false_arr):
             return if_true
 
-
-    '''
+    """
         When writing strings to storage, there are usually three cases - when string is 0,
         when string is < 31 (special format that takes just one storage slot), and when string >= 32.
 
@@ -119,26 +203,121 @@ def postprocess_trace(line):
         and I'm not super comfortable with this, but some of the code would be very unreadable without it.
 
 
-    '''
+    """
 
-    if line ~ ('if', ('lt', 31, :some_len), :if_true, :if_false):
+    if m := match(line, ("if", ("lt", 31, ":some_len"), ":if_true", ":if_false")):
+        some_len, if_true, if_false = m.some_len, m.if_true, m.if_false
         if len(if_true) == 2:
             first, second = if_true[0], if_true[1]
-            if first ~ ('store', ...) and contains(first, some_len) \
-               and second ~ ('if', ('iszero', some_len), :deep_true, :deep_false):
-                    return [first] + deep_false
+            if (
+                opcode(first) == "store"
+                and contains(first, some_len)
+                and (
+                    m := match(
+                        second,
+                        ("if", ("iszero", some_len), ":deep_true", ":deep_false"),
+                    )
+                )
+            ):
+                return [first] + m.deep_false
 
-    if line ~ ('if', ('iszero', ('mask_shl', 255, 1, 0, ('and', ('storage', 256, 0, :loc), ('add', -1, ('mask_shl', 248, 0, 8, ('iszero', ('storage', 1, 0, loc))))))), :if_true, :if_false) \
-        or line ~ ('if', ('iszero', ('mask_shl', 255, 1, 0, ('and', ('add', -1, ('mask_shl', 248, 0, 8, ('iszero', ('storage', 1, 0, :loc)))), ('storage', 256, 0, loc)))), :if_true, :if_false):
+    if (
+        m := match(
+            line,
+            (
+                "if",
+                (
+                    "iszero",
+                    (
+                        "mask_shl",
+                        255,
+                        1,
+                        0,
+                        (
+                            "and",
+                            ("storage", 256, 0, ":loc"),
+                            (
+                                "add",
+                                -1,
+                                (
+                                    "mask_shl",
+                                    248,
+                                    0,
+                                    8,
+                                    ("iszero", ("storage", 1, 0, ":loc")),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                ":if_true",
+                ":if_false",
+            ),
+        )
+    ) or (
+        m := match(
+            line,
+            (
+                "if",
+                (
+                    "iszero",
+                    (
+                        "mask_shl",
+                        255,
+                        1,
+                        0,
+                        (
+                            "and",
+                            (
+                                "add",
+                                -1,
+                                (
+                                    "mask_shl",
+                                    248,
+                                    0,
+                                    8,
+                                    ("iszero", ("storage", 1, 0, ":loc")),
+                                ),
+                            ),
+                            ("storage", 256, 0, ":loc"),
+                        ),
+                    ),
+                ),
+                ":if_true",
+                ":if_false",
+            ),
+        )
+    ):
+        if_true, if_false, loc = m.if_true, m.if_false, m.loc
 
         if len(if_false) == 1:
             first = if_false[0]
 
-            if first ~ ('if', ('lt', 31, ('storage', 256, 0, ('length', loc))), :deep_true, :deep_false) \
-                or first ~ ('if', ('lt', 31, ('storage', 256, 0, ('length', ('loc', loc)))), :deep_true, :deep_false):
-                return deep_true
+            if (
+                m := match(
+                    first,
+                    (
+                        "if",
+                        ("lt", 31, ("storage", 256, 0, ("length", loc))),
+                        ":deep_true",
+                        ":deep_false",
+                    ),
+                )
+            ) or (
+                m := match(
+                    first,
+                    (
+                        "if",
+                        ("lt", 31, ("storage", 256, 0, ("length", ("loc", loc)))),
+                        ":deep_true",
+                        ":deep_false",
+                    ),
+                )
+            ):
+                return m.deep_true
 
     return [line]
+
 
 def rewrite_string_stores(lines):
     # ugly af, and not super-precise. it should be split into 2 parts,
@@ -147,29 +326,74 @@ def rewrite_string_stores(lines):
 
     assert len(lines) == 3
     l1, l2, l3 = lines[0], lines[1], lines[2]
-    if l1 ~ ('store', 256, 0, :idx, ('add', 1, ('mask_shl', 255, 0, 1, :src))) \
-       and l2 ~ ('while', ('gt', _, _), :path2, _, :setvars) \
-       and l3 ~ ('while', ('gt', ...), :path3, ...) \
-       and len(path2) == 2 and (x:= path2[0]) \
-       and x ~ ('store', 256, 0, ('add', ('var', _), _), ('mem', ('range', ('var', :v), 32))):
-            return [
-                ('store', 256, 0, ('array', '', ('sha3', idx)), ('arr', src, ('mem', ('range', setvars[1][2], src))))
-            ]
+    if (
+        (
+            m1 := match(
+                l1,
+                ("store", 256, 0, ":idx", ("add", 1, ("mask_shl", 255, 0, 1, ":src"))),
+            )
+        )
+        and (m2 := match(l2, ("while", ("gt", Any, Any), ":path2", Any, ":setvars")))
+        and match(l3, ("while", ("gt", ...), ":path3", ...))
+        and len(m2.path2) == 2
+        and (x := m2.path2[0])
+        and match(
+            x,
+            (
+                "store",
+                256,
+                0,
+                ("add", ("var", Any), Any),
+                ("mem", ("range", ("var", ":v"), 32)),
+            ),
+        )
+    ):
+        return [
+            (
+                "store",
+                256,
+                0,
+                ("array", "", ("sha3", m1.idx)),
+                ("arr", m1.src, ("mem", ("range", m2.setvars[1][2], m1.src))),
+            )
+        ]
 
     return None
 
-def rewrite_memcpy(lines): # 2
+
+def rewrite_memcpy(lines):  # 2
     assert len(lines) == 2
     l1 = lines[0]
     l2 = lines[1]
 
-    if l1 ~ ('setmem', ('range', :s, ('mask_shl', 251, 5, 0, ('add', 31, ('cd', ('add', 4, :param))))), ('data', ('call.data', ('add', 36, param), ('cd', ('add', 4, param))), ('mem', ...))):
-        return ('setmem', ('range', s, ('cd', ('add', 4, param))), ('call.data', ('add', 36, param), ('cd', ('add', 4, param))))
-#(setmem (range (add 128 (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68)))))) (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68)))))) (data (call.data (add 36 (cd 68)) (cd (add 4 (cd 68)))) (mem (range (add 128 (cd (add 4 (cd 68)))) (add (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68))))) (mul -1 (cd (add 4 (cd 68)))))))))
+    if m := match(
+        l1,
+        (
+            "setmem",
+            (
+                "range",
+                ":s",
+                ("mask_shl", 251, 5, 0, ("add", 31, ("cd", ("add", 4, ":param")))),
+            ),
+            (
+                "data",
+                ("call.data", ("add", 36, ":param"), ("cd", ("add", 4, ":param"))),
+                ("mem", ...),
+            ),
+        ),
+    ):
+        return (
+            "setmem",
+            ("range", s, ("cd", ("add", 4, m.param))),
+            ("call.data", ("add", 36, m.param), ("cd", ("add", 4, m.param))),
+        )
+
+
+# (setmem (range (add 128 (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68)))))) (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68)))))) (data (call.data (add 36 (cd 68)) (cd (add 4 (cd 68)))) (mem (range (add 128 (cd (add 4 (cd 68)))) (add (mask_shl 251 5 0 (add 31 (cd (add 4 (cd 68))))) (mul -1 (cd (add 4 (cd 68)))))))))
 #        (if (iszero (mask_shl 5 0 0 (cd (add 4 (cd 68))))) (t
 
 
-'''
+"""
 
     test case for above:
 
@@ -192,5 +416,4 @@ def rewrite_memcpy(lines): # 2
           (continue id6799 ((setvar 0 (add 1 (var 0)))))
         ) id6799 [('setvar', 0, ('mask_shl', 251, 0, -5, ('add', 31, ('cd', ('add', 4, ('cd', 4))))))])
 
-'''
-
+"""
