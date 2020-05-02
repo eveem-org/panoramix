@@ -219,7 +219,7 @@ def decompile(this_addr, only_func_name=None):
             # skip all the functions that are not it
             continue
 
-        logger.info(f"Parsing %s...", fname)
+        logger.info("Parsing %s...", fname)
         logger.debug("stack %s", stack)
 
         try:
