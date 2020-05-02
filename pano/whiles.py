@@ -54,7 +54,6 @@ from pano.prettify import explain, pformat_trace, pprint_repr, pprint_trace, pre
 from pano.simplify import simplify_trace
 from utils.helpers import (
     C,
-    cached,
     contains,
     find_f_list,
     find_f_set,

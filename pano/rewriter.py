@@ -51,7 +51,6 @@ from core.memloc import (
 from pano.matcher import Any, match
 from pano.prettify import pformat_trace, pprint_trace
 from utils.helpers import (
-    cached,
     contains,
     find_f_list,
     find_f_set,

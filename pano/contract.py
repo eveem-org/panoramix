@@ -50,10 +50,7 @@ def deserialize(trace):
 
 
 class Contract:
-    def __init__(self, addr, network, functions, problems, ver):
-        self.addr = addr
-        self.network = network
-        self.ver = ver
+    def __init__(self, functions, problems):
         self.problems = problems
         self.functions = []
         for func in functions.values():
@@ -64,9 +61,6 @@ class Contract:
     def json(self):
         return json.dumps(
             {
-                "addr": self.addr,
-                "network": self.network,
-                "ver": self.ver,
                 "problems": self.problems,
                 "stor_defs": self.stor_defs,
                 "functions": [f.serialize() for f in self.functions],
@@ -74,9 +68,6 @@ class Contract:
         )
 
     def load(self, data):
-        self.addr = data["addr"]
-        self.network = data["network"]
-        self.ver = data["ver"]
         self.problems = data["problems"]
         self.functions = []
         self.stor_defs = data["stor_defs"] if "stor_defs" in data else {}
