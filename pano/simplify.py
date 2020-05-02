@@ -276,8 +276,12 @@ def simplify_exp(exp):
             ("cd", m.num),
         )  # calldata params are left-padded usually, it seems
 
+    if m := match(exp, ("iszero", ("iszero", ":e"))):
+        exp = ("bool", m.e)
+
     if m := match(exp, ("bool", ("bool", ":e"))):
         exp = ("bool", m.e)
+
 
     if (m := match(exp, ("eq", ":sth", 0))) or (m := match(exp, ("eq", 0, ":sth"))):
         exp = ("iszero", m.sth)
