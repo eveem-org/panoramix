@@ -131,18 +131,6 @@ def opcode(exp):
         return exp[0]
 
 
-def cache_fname(addr, ext, dir="cache_pan"):
-    dir_name = dir + "/" + addr[:5] + "/"
-
-    if not os.path.isdir(dir):
-        os.mkdir(dir)
-
-    if not os.path.isdir(dir_name):
-        os.mkdir(dir_name)
-
-    return dir_name + addr + "." + ext
-
-
 def before_after(func):
     def wrapper(*args):
         res = func(*args)
@@ -181,19 +169,6 @@ ARRAY_OPCODES = [
     "staticcall.return_data",
     "code.data",
 ]
-
-
-def assure_dir_exists(dir_name):
-    if dir_name[-1:] == "/":
-        dir_name = dir_name[:-1]
-
-    dir_so_far = ""
-    for d in dir_name.split("/"):
-        dir_so_far += d + "/"
-        if not os.path.isdir(dir_so_far):
-            os.mkdir(dir_so_far)
-
-    assert os.path.isdir(dir_name), dir_name
 
 
 def is_array(op):

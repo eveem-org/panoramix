@@ -1,8 +1,9 @@
 import hashlib
 import json
+import logging
+import os
 import os.path
 import sys
-import logging
 
 from pano.matcher import Any, match
 
@@ -162,14 +163,9 @@ def make_abi(hash_targets):
     hash_name = hashlib.sha256(hash_name).hexdigest()
 
     dir_name = (
-        "cache_pabi/" + hash_name[:3] + "/"
+        "cache/pabi/" + hash_name[:3] + "/"
     )  #:3, because there's not '0x' at the beginning
-
-    if not os.path.isdir("cache_pabi"):
-        os.mkdir("cache_pabi")
-
-    if not os.path.isdir(dir_name):
-        os.mkdir(dir_name)
+    os.makedirs(dir_name, exist_ok=True)
 
     cache_fname = dir_name + hash_name + ".pabi"
 

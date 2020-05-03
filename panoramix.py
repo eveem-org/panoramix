@@ -1,5 +1,6 @@
 import logging
 import sys
+import cProfile
 
 import coloredlogs
 import timeout_decorator
@@ -96,7 +97,6 @@ if __name__ == '__main__':
         for addr in sys.argv[1].split(","):
             print_decompilation(addr)
     elif "--profile" in sys.argv:
-        import cProfile
         with cProfile.Profile() as profile:
             print_decompilation(sys.argv[1])
         profile.dump_stats("panoramix.prof")

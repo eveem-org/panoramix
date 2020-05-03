@@ -619,15 +619,14 @@ def simplify_max(exp):
     if opcode(exp) != "max":
         return exp
 
-    if opcode(exp) == "max":
-        res = ("max",)
-        for e in exp[1:]:
-            if opcode(e) == "max":
-                res += e[1:]
-            else:
-                res += (e,)
+    res = ("max",)
+    for e in exp[1:]:
+        if opcode(e) == "max":
+            res += e[1:]
+        else:
+            res += (e,)
 
-        return res
+    return res
 
 
 @cached
@@ -652,14 +651,11 @@ def le_op(left, right):  # left <= right
 
 def max_op(left, right):
     try:
-
         if le_op(left, right):
             return right
         else:
             return left
-
     except CannotCompare:
-
         if le_op(right, left):
             return left
         else:
@@ -676,36 +672,30 @@ def safe_max_op(left, right):
 def _max_op(base, what):
     # compares base with what, different from algebra's max because it can return (max, x,y,z)
     if opcode(base) != "max":
-
-        if safe_lt_op(what, base) is True:
+        r = safe_lt_op(what, base)
+        if r is True:
             return base
-
-        if safe_lt_op(what, base) is False:
+        elif r is False:
             return what
-
         return ("max", base, what)
 
-    else:  # opcode(base) == 'max':
-        res = []
-        for b in base[1:]:
-            cmp = safe_lt_op(what, b)
+    res = []
+    for b in base[1:]:
+        cmp = safe_lt_op(what, b)
 
-            if cmp is True:
-                return base
+        if cmp is True:
+            return base
+        if cmp is False:
+            res.append(what)
+        if cmp is None:
+            res.append(b)
 
-            if cmp is False:
-                res.append(what)
+    res.append(what)
 
-            if cmp is None:
-                res.append(b)
-
-        res.append(what)
-
-        res = tuple(set(res))
-        if len(res) > 1:
-            return ("max",) + res
-        else:
-            return res[0]
+    res = tuple(set(res))
+    if len(res) > 1:
+        return ("max",) + res
+    return res[0]
 
 
 assert _max_op(("max", 128, "unknown"), 200) == ("max", 200, "unknown")
@@ -742,14 +732,11 @@ def safe_min_op(left, right):
 
 
 def min_op(left, right):
-
     try:
         if le_op(left, right):
-
             return left
         else:
             return right
-
     except CannotCompare:
         if le_op(right, left):
             return right

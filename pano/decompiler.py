@@ -13,7 +13,7 @@ from pano.loader import Loader
 from pano.prettify import explain, pprint_repr, pprint_trace, pretty_type
 from pano.vm import VM
 from pano.whiles import make_whiles
-from utils.helpers import C, cache_fname, rewrite_trace
+from utils.helpers import C, rewrite_trace
 
 logger = logging.getLogger(__name__)
 
