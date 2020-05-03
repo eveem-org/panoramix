@@ -99,7 +99,7 @@ def make_ast(trace):
 
     def mask_storage(exp):
         if m := match(exp, ("stor", ":size", ":off", ":idx")):
-            return ("mask_shl", m.size, 0, 0, m.exp)
+            return ("mask_shl", m.size, 0, 0, exp)
         else:
             return exp
 

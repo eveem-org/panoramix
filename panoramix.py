@@ -78,7 +78,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         print(
             f"""
-        python3 panoramix.py [address|shortcut|-] [func_name] [--verbose] [--silent]
+        python3 panoramix.py [address|shortcut|-] [func_name] [--verbose] [--silent] [--profile]
 
             address: {C.gray}e.g. 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d
                     you can provide multiple, separating with comma{C.end}
@@ -95,6 +95,12 @@ if __name__ == '__main__':
     if "," in sys.argv[1]:
         for addr in sys.argv[1].split(","):
             print_decompilation(addr)
+    elif "--profile" in sys.argv:
+        import cProfile
+        with cProfile.Profile() as profile:
+            print_decompilation(sys.argv[1])
+        profile.dump_stats("panoramix.prof")
+
     else:
         print_decompilation(sys.argv[1])
 

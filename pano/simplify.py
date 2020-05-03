@@ -130,10 +130,8 @@ def simplify_trace(trace):
 
     old_trace = None
     count = 0
-    while trace != old_trace:
+    while trace != old_trace and count < 40:
         count += 1
-        if count > 40:
-            break
 
         old_trace = trace
 
@@ -142,13 +140,13 @@ def simplify_trace(trace):
         # between every stage here to see changes that happen to the code.
 
         trace = replace_f(trace, simplify_exp)
-        explain(f"simplify expressions", trace)
+        explain("simplify expressions", trace)
 
         trace = cleanup_vars(trace)
         explain("cleanup variables", trace)
 
         trace = cleanup_mems(trace)
-        explain(f"cleanup mems", trace)
+        explain("cleanup mems", trace)
 
         trace = rewrite_trace(trace, split_setmem)
         trace = rewrite_trace_full(trace, split_store)
@@ -158,22 +156,22 @@ def simplify_trace(trace):
         explain("cleanup vars", trace)
 
         trace = replace_f(trace, simplify_exp)
-        explain(f"simplify expressions", trace)
+        explain("simplify expressions", trace)
 
         trace = cleanup_mul_1(trace)
-        explain(f"simplify expressions", trace)
+        explain("simplify expressions", trace)
 
         trace = cleanup_msize(trace)
-        explain(f"calculate msize", trace)
+        explain("calculate msize", trace)
 
         trace = replace_bytes_or_string_length(trace)
-        explain(f"replace storage with length", trace)
+        explain("replace storage with length", trace)
 
         trace = cleanup_conds(trace)
-        explain(f"cleanup unused ifs", trace)
+        explain("cleanup unused ifs", trace)
 
         trace = rewrite_trace(trace, loop_to_setmem)
-        explain(f"convert loops to setmems", trace)
+        explain("convert loops to setmems", trace)
 
         trace = propagate_storage_in_loops(trace)
         explain("move loop indexes outside of loops", trace)
