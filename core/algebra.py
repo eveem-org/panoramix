@@ -535,6 +535,9 @@ def _ge_zero(exp):
 
 @cached
 def lt_op(left, right):  # left < right
+    if type(left) == int and type(right) == int:
+        return left < right
+
     if (m := match(left, ("add", ":int:num", ":max"))) and opcode(m.max) == "max":
         terms = m.max[1:]
         left = ("max",) + tuple(add_op(t, m.num) for t in terms)
@@ -542,9 +545,6 @@ def lt_op(left, right):  # left < right
     if (m := match(right, ("add", ":int:num", ":max"))) and opcode(m.max) == "max":
         terms = m.max[1:]
         right = ("max",) + tuple(add_op(t, m.num) for t in terms)
-
-    if type(left) == int and type(right) == int:
-        return left < right
 
     if opcode(right) == "max":
         left, right = right, left
@@ -595,15 +595,13 @@ def lt2(left, right):
     subbed = sub_op(right, left)
 
     sgn = get_sign(subbed)
-
     if sgn is None:
         raise CannotCompare
-    else:
-        return sgn > 0
+
+    return sgn > 0
 
 
 def safe_lt_op(left, right):
-
     try:
         return lt_op(left, right)
     except CannotCompare:
