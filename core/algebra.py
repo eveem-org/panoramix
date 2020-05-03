@@ -281,8 +281,7 @@ def add_op(*args):
 
             tried = try_add(r, rr) or try_add(rr, r)
 
-            if tried is not None and tried != 0:
-
+            if tried:
                 if opcode(tried) == "mul":
                     symbolic[idx] = tried
 

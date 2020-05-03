@@ -155,28 +155,19 @@ def before_after(func):
     return wrapper
 
 
-cached_dict = {}
-
-
 def cached(func):
-    name = func.__name__
+    cache = {}
 
-    if name not in cached_dict:
-        cached_dict[name] = {}
-
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
+        key = args + tuple(kwargs.items())
         try:
-            if args in cached_dict[name]:
-                return cached_dict[name][args]
-        except:
+            return cache[key]
+        except TypeError: # If it contains lists.
+            return func(*args, **kwargs)
+        except KeyError:
             pass
-
-        ret = func(*args)
-        try:
-            cached_dict[name][args] = ret
-        except:
-            pass
-
+        ret = func(*args, **kwargs)
+        cache[key] = ret
         return ret
 
     return wrapper
