@@ -17,6 +17,7 @@
 
 from pano.matcher import Any, match
 from utils.helpers import EasyCopy, all_concrete, cached, opcode, to_exp2
+import numbers
 
 from .variants import variants
 
@@ -1076,14 +1077,7 @@ def _try_add(self, other):
 
     #   so proud of this /s
 
-    assert match(self, ("mul", int, ...))
-    terms = self[2:]
-    if len(terms) > 1:
-        return None
-
-    assert match(other, ("mul", int, ...))
-    terms = other[2:]
-    if len(terms) > 1:
+    if not match(self, ("mul", int, Any)) or not match(other, ("mul", int, Any)):
         return None
 
     if (
@@ -1119,6 +1113,7 @@ def _try_add(self, other):
         if (
             opcode(self_mask) == "mask_shl"
             and opcode(other_mask) == "mask_shl"
+            and isinstance(self_mask[1], numbers.Number) and isinstance(self_mask[2], numbers.Number)
             and self_mask[1] + self_mask[2] == 256
             and self_mask[2] == other_mask[1]
             and other_mask[2] == 0
