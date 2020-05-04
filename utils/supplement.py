@@ -8,7 +8,7 @@ import os
 import logging
 import lzma
 
-from .helpers import opcode, padded_hex, cached
+from .helpers import opcode, cached
 from .helpers import (
     COLOR_HEADER,
     COLOR_BLUE,
@@ -58,32 +58,10 @@ def check_supplements():
     if not os.path.isfile("cache/supplement.db"):
         logger.info("decompressing supplement.db.xz into cache/supplement.db...")
         with lzma.open("supplement.db.xz") as inf, open("cache/supplement.db", "wb") as outf:
-            while (buf := inf.read(4096)):
+            while (buf := inf.read(1024*1024)):
                 outf.write(buf)
 
     assert os.path.isfile("cache/supplement.db")
-
-    if not os.path.isfile("cache/supp2.db"):
-        logger.info("creating cache/supp2.db...")
-        c = sqlite3.connect("cache/supplement.db").cursor()
-        d_conn = sqlite3.connect("cache/supp2.db")
-        d = d_conn.cursor()
-
-        d.execute(
-            "create table functions (hash integer, name text, folded_name text, params text, primary KEY(hash))"
-        )
-
-        c.execute("SELECT hash, name, folded_name, params from functions group by hash")
-        results = c.fetchall()
-
-        for r in results:
-            insert_row = int(r[0], 16), r[1], r[2], r[3]
-            d.execute("INSERT INTO functions VALUES (?, ?, ?, ?)", insert_row)
-
-        d_conn.commit()
-        d_conn.close()
-
-    assert os.path.isfile("cache/supp2.db")
 
 
 def _cursor():
@@ -100,27 +78,6 @@ def _cursor():
     #    # fails in multi-threading, this should help
     #    conn = sqlite3.connect("supplement.db")
     #    return conn.cursor()
-
-    return c
-
-
-conn2 = None
-
-
-def _cursor2():
-    global conn2
-
-    check_supplements()
-
-    if conn2 is None:
-        conn2 = sqlite3.connect("cache/supp2.db")
-
-    #try:
-    c = conn2.cursor()
-    #except:
-    #    # fails in multi-threading, this should help
-    #    conn2 = sqlite3.connect("supp2.db")
-    #    return conn2.cursor()
 
     return c
 
@@ -151,20 +108,22 @@ def fetch_sigs(hash):
 def fetch_sig(hash):
     if type(hash) == str:
         hash = int(hash, 16)
+    hash = '{:#010x}'.format(hash)
 
-    c = _cursor2()
+    c = _cursor()
     c.execute(
-        "SELECT hash, name, folded_name, params from functions where hash=?", (hash,)
+        "SELECT hash, name, folded_name, params, cooccurs from functions where hash=?", (hash,)
     )
 
     results = c.fetchall()
     if len(results) == 0:
         return None
 
-    row = results[0]
+    # Take the one that cooccurs with the most things, it's probably the most relevant.
+    row = max(results, key=lambda row: len(row[4]))
 
     return {
-        "hash": padded_hex(row[0], 8),
+        "hash": hash,
         "name": row[1],
         "folded_name": row[2],
         "params": json.loads(row[3]),
