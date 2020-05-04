@@ -5,6 +5,8 @@ import urllib.request
 import sys
 import time
 import os
+import logging
+import lzma
 
 from .helpers import opcode, padded_hex, cached
 from .helpers import (
@@ -47,24 +49,24 @@ from .helpers import (
 
 """
 
+logger = logging.getLogger(__name__)
+
 conn = None
 
 
 def check_supplements():
-    if not os.path.isfile("supplement.db"):
-        print(COLOR_OKGREEN + "Hello, is this your first Panoramix run?" + ENDC)
-        print()
-        print("I need to fetch the signatures database from the web")
-        print("This will be done just once.")
-        print()
-        fetch_db()
+    if not os.path.isfile("cache/supplement.db"):
+        logger.info("decompressing supplement.db.xz into cache/supplement.db...")
+        with lzma.open("supplement.db.xz") as inf, open("cache/supplement.db", "wb") as outf:
+            while (buf := inf.read(4096)):
+                outf.write(buf)
 
-    assert os.path.isfile("supplement.db")
+    assert os.path.isfile("cache/supplement.db")
 
-    if not os.path.isfile("supp2.db"):
-        print("creating supp2.db...")
-        c = sqlite3.connect("supplement.db").cursor()
-        d_conn = sqlite3.connect("supp2.db")
+    if not os.path.isfile("cache/supp2.db"):
+        logger.info("creating cache/supp2.db...")
+        c = sqlite3.connect("cache/supplement.db").cursor()
+        d_conn = sqlite3.connect("cache/supp2.db")
         d = d_conn.cursor()
 
         d.execute(
@@ -80,9 +82,8 @@ def check_supplements():
 
         d_conn.commit()
         d_conn.close()
-        print("done.")
 
-    assert os.path.isfile("supp2.db")
+    assert os.path.isfile("cache/supp2.db")
 
 
 def _cursor():
@@ -91,14 +92,14 @@ def _cursor():
     check_supplements()
 
     if conn is None:
-        conn = sqlite3.connect("supplement.db")
+        conn = sqlite3.connect("cache/supplement.db")
 
-    try:
-        c = conn.cursor()
-    except:
-        # fails in multi-threading, this should help
-        conn = sqlite3.connect("supplement.db")
-        return conn.cursor()
+    #try:
+    c = conn.cursor()
+    #except Exception:
+    #    # fails in multi-threading, this should help
+    #    conn = sqlite3.connect("supplement.db")
+    #    return conn.cursor()
 
     return c
 
@@ -112,14 +113,14 @@ def _cursor2():
     check_supplements()
 
     if conn2 is None:
-        conn2 = sqlite3.connect("supp2.db")
+        conn2 = sqlite3.connect("cache/supp2.db")
 
-    try:
-        c = conn2.cursor()
-    except:
-        # fails in multi-threading, this should help
-        conn2 = sqlite3.connect("supp2.db")
-        return conn2.cursor()
+    #try:
+    c = conn2.cursor()
+    #except:
+    #    # fails in multi-threading, this should help
+    #    conn2 = sqlite3.connect("supp2.db")
+    #    return conn2.cursor()
 
     return c
 
@@ -153,7 +154,7 @@ def fetch_sig(hash):
 
     c = _cursor2()
     c.execute(
-        f"SELECT hash, name, folded_name, params from functions where hash={hash}"
+        "SELECT hash, name, folded_name, params from functions where hash=?", (hash,)
     )
 
     results = c.fetchall()
@@ -168,38 +169,6 @@ def fetch_sig(hash):
         "folded_name": row[2],
         "params": json.loads(row[3]),
     }
-
-
-def fetch_db():
-    def reporthook(count, block_size, total_size):
-        # https://blog.shichao.io/2012/10/04/progress_speed_indicator_for_urlretrieve_in_python.html
-        global start_time
-        if count == 0:
-            start_time = time.time()
-            return
-
-        duration = time.time() - start_time
-        progress_size = int(count * block_size)
-        speed = int(progress_size / (1024 * duration))
-        percent = min(int((count * block_size * 100) / total_size), 100)
-        sys.stdout.write(
-            "\r%d of 27 MB, %d KB/s, %d seconds passed..."
-            % (progress_size / (1024 * 1024), speed, duration)
-        )
-        sys.stdout.flush()
-
-    print("fetching supplement.zip...")
-    url = "http://eveem.org/static/supplement.zip"
-    urllib.request.urlretrieve(url, "tmp.supplement.db.zip", reporthook)
-    print("")
-    print("unzipping into supplement.db...")
-    with ZipFile("tmp.supplement.db.zip") as myzip:
-        with myzip.open("supplement.db") as myfile:
-            with open("supplement.db", "wb") as file:
-                file.write(myfile.read())
-
-    os.remove("tmp.supplement.db.zip")
-    print("done.")
 
 
 """
