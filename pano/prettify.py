@@ -232,7 +232,7 @@ def pprint_logic(exp, indent=2):
             cond, path, jd, vars = exp[1], exp[2], exp[3], exp[4]
         else:
             cond, path = exp[1], exp[2]
-            jd, vars = None, []
+            vars = []
 
         for v in vars:
             yield " " * indent + list(
@@ -851,8 +851,6 @@ def pretty_stor(exp, add_color=True):
 
 
 def pretty_num(exp, add_color):
-    col = partial(colorize, add_color=True)
-
     if type(exp) == float:
         if exp - int(exp) == 0:
             exp = int(exp)
