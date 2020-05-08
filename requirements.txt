@@ -1,3 +1,4 @@
 coloredlogs
 requests
+web3
 timeout_decorator
