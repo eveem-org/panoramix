@@ -14,7 +14,9 @@ _ = Any
 
 
 class Match:
-    pass
+    def __getattr__(self, name):
+        raise AttributeError()
+        raise NotImplementedError()  # For PyLint.
 
 
 class NoMatch(ValueError):

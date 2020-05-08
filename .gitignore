@@ -1,11 +1,3 @@
-__pycache__
-*/__pycache__
-cache_code
-cache_pabi
-cache_pan
+__pycache__/
 cache
-cache_pan
 .DS_Store
-supplement.db
-supp2.db
-cache_*

@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import os.path
 import traceback
 
@@ -8,7 +9,6 @@ from utils.helpers import (
     COLOR_GRAY,
     ENDC,
     EasyCopy,
-    assure_dir_exists,
     colorize,
     find_f,
     find_f_list,
@@ -16,7 +16,6 @@ from utils.helpers import (
     pretty_bignum,
 )
 from utils.opcode_dict import opcode_dict
-from utils.profiler import checkpoint
 from utils.signatures import get_func_name, make_abi
 from utils.supplement import fetch_sig
 
@@ -27,17 +26,7 @@ cache_sigs = {
     False: {},
 }
 
-
-def code_fetch(address, network="mainnet"):
-    assert (
-        network == "mainnet"
-    ), "only mainnet supported, but you can set WEB3_PROVIDER_URI to whatever node you want on whatever network"
-
-    from web3.auto import w3
-
-    code = w3.eth.getCode(address).hex()[2:]
-
-    return code
+LOADER_TIMEOUT = 60
 
 
 class Loader(EasyCopy):
@@ -89,76 +78,29 @@ class Loader(EasyCopy):
         self.hash_targets = {}  # hash -> (jumpdest, stack)
         self.func_list = []
 
-        self.addr = None
         self.binary = None
 
-    def load(self, this_addr):
-        if len(this_addr) > 30:
-            self.load_addr(this_addr)
-        else:
-            self.load_stdin(this_addr)
-
-    def load_stdin(self, hash_id):
-        assure_dir_exists("cache_stdin")
-
-        fname = f"cache_stdin/{hash_id}.bin"
-        address = hash_id
-        self.addr = hash_id
-        with open(fname) as f:
-            code = f.read()
-            self.network = "stdin"
-
-        self.load_binary(code)
-
     def load_addr(self, address):
-        if address == address.lower():
-            logger.warning(
-                "Address not checksummed. Fixed, but needed to import web3 (+0.6s exec time)"
-            )
-            from web3 import Web3  # only here, because Web3
+        assert address.isalnum()
+        address = address.lower()
 
-            address = Web3.toChecksumAddress(address)
-
-        self.addr = address
-
-        fname = None
-        code = None
-
-        dir_name = "cache_code/" + address[:5] + "/"
-
-        assure_dir_exists(dir_name)
-
+        dir_name = "cache/code/" + address[:5] + "/"
+        os.makedirs(dir_name, exist_ok=True)
         cache_fname = f"{dir_name}{address}.bin"
-
-        if address == address.lower() and os.path.isfile(cache_fname.lower()):
-            print(
-                "addr not checksummed, but found a checksummed one in cache, using that one"
-            )
-            cache_fname = cache_fname.lower()
 
         if os.path.isfile(cache_fname):
             logger.info("Code for %s found in cache...", address)
-
             with open(cache_fname) as source_file:
-                code = source_file.read()
-                self.network = "mainnet"
-
+                code = source_file.read().strip()
         else:
             logger.info("Fetching code for %s...", address)
+            from web3 import Web3
+            from web3.auto import w3
 
-            code = ""
-            for network in "mainnet", "goerli", "ropsten", "kovan", "rinkeby":
-                code = code_fetch(address, network)
-                if len(code) > 0:
-                    self.network = network
-                    break
-            else:
-                self.network = "none"
-
-            with open(cache_fname, "w+") as f:
-                f.write(code)
-
-            fname = cache_fname
+            code = w3.eth.getCode(Web3.toChecksumAddress(address)).hex()[2:]
+            if code:
+                with open(cache_fname, "w+") as f:
+                    f.write(code)
 
         self.load_binary(code)
 
@@ -170,7 +112,7 @@ class Loader(EasyCopy):
             # and running VM in a special mode that returns 'funccall'
             # in places where it looks like there is a func call
 
-            trace = vm.run(0)
+            trace = vm.run(0, timeout=LOADER_TIMEOUT)
 
             def func_calls(exp):
                 if m := match(exp, ("funccall", ":fx_hash", ":target", ":stack")):
@@ -207,7 +149,7 @@ class Loader(EasyCopy):
             logger.exception("Loader issue.")
             self.add_func(0, name="_fallback()")
 
-        abi = make_abi(self.hash_targets)
+        make_abi(self.hash_targets)
         for hash, (target, stack) in self.hash_targets.items():
             fname = get_func_name(hash)
             self.func_list.append((hash, fname, target, stack))

@@ -1,97 +1,138 @@
-# coding: tilde
-
-from copy import copy
-import core.arithmetic as arithmetic
-import logging
 import collections
+import logging
+import sys
+from copy import copy
 
-from core.memloc import range_overlaps, splits_mem, fill_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store
-
-from utils.helpers import C, rewrite_trace_multiline, opcode, cached, walk_trace, to_exp2, replace, find_op_list
-from utils.helpers import contains, find_f_set, find_f_list, rewrite_trace, rewrite_trace_full, replace, replace_f, replace_f_stop, rewrite_trace_ifs
-
-from core.algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add, divisible_bytes, _max_op, div_op
-from core.algebra import add_op, bits, mul_op, get_sign, safe_ge_zero, ge_zero, lt_op, safe_lt_op, safe_le_op, simplify_max, le_op, max_op, safe_max_op, safe_min_op, min_op, or_op, neg_mask_op, mask_op, apply_mask_to_storage, apply_mask, try_add, to_bytes
-
+from core import arithmetic
+from core.algebra import (
+    _max_op,
+    add_ge_zero,
+    add_op,
+    apply_mask,
+    apply_mask_to_storage,
+    bits,
+    calc_max,
+    div_op,
+    divisible_bytes,
+    flatten_adds,
+    ge_zero,
+    get_sign,
+    le_op,
+    lt_op,
+    mask_op,
+    max_op,
+    max_to_add,
+    min_op,
+    minus_op,
+    mul_op,
+    neg_mask_op,
+    or_op,
+    safe_ge_zero,
+    safe_le_op,
+    safe_lt_op,
+    safe_max_op,
+    safe_min_op,
+    simplify,
+    simplify_max,
+    sub_op,
+    to_bytes,
+    try_add,
+)
 from core.arithmetic import is_zero, to_real_int
-
-from pano.prettify import pformat_trace, pprint_trace, pprint_repr
+from core.masks import get_bit, to_mask, to_neg_mask
+from core.memloc import (
+    apply_mask_to_range,
+    fill_mem,
+    memloc_overwrite,
+    range_overlaps,
+    split_setmem,
+    split_store,
+    splits_mem,
+)
+from pano.matcher import Any, match
+from pano.prettify import explain, pformat_trace, pprint_repr, pprint_trace, pretty_repr
+from pano.simplify import simplify_trace
+from utils.helpers import (
+    C,
+    contains,
+    find_f_list,
+    find_f_set,
+    find_op_list,
+    opcode,
+    replace,
+    replace_f,
+    replace_f_stop,
+    rewrite_trace,
+    rewrite_trace_full,
+    rewrite_trace_ifs,
+    rewrite_trace_multiline,
+    to_exp2,
+    walk_trace,
+)
 
 from .postprocess import cleanup_mul_1
 
-from utils.profiler import checkpoint, checkpoint_start, log_checkpoints, func_caller
-
-from core.masks import get_bit
-
-from core.masks import to_mask, to_neg_mask
-
-from pano.prettify import pretty_repr, explain
-
-from pano.simplify import simplify_trace
-
-import sys
-
 logger = logging.getLogger(__name__)
-logger.level = logging.CRITICAL # switch to INFO for detailed
+logger.level = logging.CRITICAL  # switch to INFO for detailed
 
-'''
+"""
 
     Rube Goldberg would be proud.
 
-'''
+"""
 
-def make_whiles(trace): 
 
+def make_whiles(trace):
     trace = make(trace)
-
-    explain('Loops -> whiles', trace)
+    explain("Loops -> whiles", trace)
 
     # clean up jumpdests
-    trace = rewrite_trace(trace, lambda line: [] if line ~ ('jumpdest', ...) else [line])
-
+    trace = rewrite_trace(
+        trace, lambda line: [] if opcode(line) == "jumpdest" else [line]
+    )
     trace = simplify_trace(trace)
 
     return trace
 
-'''
+
+"""
 
     make whiles
 
-'''
+"""
 
 
 def make(trace):
     res = []
 
     for idx, line in enumerate(trace):
-        if line ~ ('if', :cond, :if_true, :if_false):
-            res.append(('if', cond, make(if_true), make(if_false)))
+        if m := match(line, ("if", ":cond", ":if_true", ":if_false")):
+            res.append(("if", m.cond, make(m.if_true), make(m.if_false)))
 
-        elif line ~ ('label', :jd, :vars, ...):
+        elif m := match(line, ("label", ":jd", ":vars", ...)):
+            jd, vars = m.jd, m.vars
             try:
-                before, inside, remaining, cond = to_while(trace[idx+1:], jd)
-            except:
+                before, inside, remaining, cond = to_while(trace[idx + 1 :], jd)
+            except Exception:
                 continue
-                return trace
 
-            inside = inside #+ [str(inside)]
+            inside = inside  # + [str(inside)]
 
             inside = make(inside)
             remaining = make(remaining)
 
             for _, v_idx, v_val in vars:
-                before = replace(before, ('var', v_idx), v_val)
+                before = replace(before, ("var", v_idx), v_val)
             before = make(before)
 
-
             res.extend(before)
-            res.append(('while', cond, inside, repr(jd), vars))
+            res.append(("while", cond, inside, repr(jd), vars))
             res.extend(remaining)
 
             return res
 
-        elif line ~ ('goto', :jd, :setvars):
-            res.append(('continue', repr(jd), setvars))
+        elif m := match(line, ("goto", ":jd", ":setvars")):
+            res.append(("continue", repr(m.jd), m.setvars))
 
         else:
             res.append(line)
@@ -100,25 +141,20 @@ def make(trace):
 
 
 def get_jds(line):
-    if line ~ ('goto', :jd, ...):
-        return [jd]
+    if m := match(line, ("goto", ":jd", ...)):
+        return [m.jd]
+    return []
 
-    else:
-        return []
 
 def is_revert(trace):
     if len(trace) > 1:
         return False
 
     line = trace[0]
-    if (line ~ ('return', 0)) or \
-       (line ~ ('revert', ...)) or \
-       (line ~ ('invalid', ...)):
-        return True
+    return (line == ("return", 0)) or (opcode(line) in ("revert", "invalid"))
 
-    return False
 
-def to_while(trace, jd, path = None):
+def to_while(trace, jd, path=None):
     path = path or []
 
     while True:
@@ -127,14 +163,15 @@ def to_while(trace, jd, path = None):
         line = trace[0]
         trace = trace[1:]
 
-        if (line ~ ('if', :cond, :if_true, :if_false)):
+        if m := match(line, ("if", ":cond", ":if_true", ":if_false")):
+            cond, if_true, if_false = m.cond, m.if_true, m.if_false
             if is_revert(if_true):
-                path.append(('require', is_zero(cond)))
+                path.append(("require", is_zero(cond)))
                 trace = if_false
                 continue
 
             if is_revert(if_false):
-                path.append(('require', cond))
+                path.append(("require", cond))
                 trace = if_true
                 continue
 
@@ -144,10 +181,10 @@ def to_while(trace, jd, path = None):
             assert (jd in jds_true) != (jd in jds_false), (jds_true, jds_false)
 
             def add_path(line):
-                if line ~ ('goto', _, :svs):
+                if m := match(line, ("goto", Any, ":svs")):
                     path2 = path
-                    for _, v_idx, v_val in svs:
-                        path2 = replace(path2, ('var', v_idx), v_val)
+                    for _, v_idx, v_val in m.svs:
+                        path2 = replace(path2, ("var", v_idx), v_val)
 
                     return path2 + [line]
                 else:
@@ -163,5 +200,4 @@ def to_while(trace, jd, path = None):
         else:
             path.append(line)
 
-
-    assert False, f'no if after label?{jd}'
+    assert False, f"no if after label?{jd}"

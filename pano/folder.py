@@ -227,7 +227,7 @@ def fold_aux(trace):
             if m := match(line, ("if", ":cond", ":if_true")):
                 cond, if_true = m.cond, m.if_true
                 if_false = trace[idx + 1 :]
-                last_true = if_true[-1]
+                last_true = if_true[-1] if if_true else None
                 if (
                     if_false == [("return", 0)]
                     or if_false == [("revert", 0)]
