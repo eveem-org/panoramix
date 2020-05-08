@@ -73,7 +73,14 @@ def print_decompilation(this_addr):
         if not sys.argv[2].startswith("--"):
             function_name = sys.argv[2]
 
-    decompilation = decompile_address(this_addr, function_name)
+    if this_addr == '-':
+        this_addr = sys.stdin.read().strip()
+
+    if len(this_addr) == 42:
+        decompilation = decompile_address(this_addr, function_name)
+    else:
+        decompilation = decompile_bytecode(this_addr, function_name)
+
     print(decompilation.text)
 
 

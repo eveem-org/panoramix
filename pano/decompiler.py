@@ -140,7 +140,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
             if target > 1 and loader.lines[target][1] == "jumpdest":
                 target += 1
 
-            @timeout_decorator.timeout(120, use_signals=True)
+            @timeout_decorator.timeout(60*3, use_signals=True)
             def dec():
                 trace = VM(loader).run(target, stack=stack, timeout=60)
                 explain("Initial decompiled trace", trace[1:])

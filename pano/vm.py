@@ -106,7 +106,7 @@ class Node:
 
     def make_trace(self):
         if self.trace is None:
-            return ["...unterminated..."]
+            return [("undefined", "decompilation didn't finish")]
 
         begin_vars = []
         if self.is_label():
@@ -346,7 +346,7 @@ class VM(EasyCopy):
 
         if i not in lines:
             if type(i) != int:
-                return [("undefined", "remco jump", i)]
+                return [("undefined", "jump to a parameter computed at runtime", i)]
             else:
                 return [("invalid", "jumdest", i)]
 

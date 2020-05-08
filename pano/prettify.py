@@ -658,8 +658,8 @@ def pretty_line(r, add_color=True):
         yield "stop"
 
     elif opcode(r) == "undefined":
-        _, *params = r
-        yield COLOR_WARNING + "..." + ENDC + COLOR_GRAY + f"  # unusual jump {params}, couldn't decompile, sorry" + ENDC
+        params = tuple(r[1:])
+        yield COLOR_WARNING + "..." + ENDC + COLOR_GRAY + f"  # Decompilation aborted, sorry: {params}" + ENDC
 
     elif opcode(r) == "invalid":
         _, *rest = r
