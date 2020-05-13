@@ -359,7 +359,11 @@ class VM(EasyCopy):
                 return [("invalid", "jump")]
 
         while True:
-            line = lines[i]
+            try:
+                line = lines[i]
+            except KeyError:
+                trace.append(("invalid", "jumpdest"))
+                return trace
 
             res = self.handle_jumps(trace, line, condition)
             if res is not None:
