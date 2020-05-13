@@ -660,10 +660,10 @@ def _sparser(orig_storages):
             return ("array", m.idx, m.loc)
 
         if m := match(exp, ("add", ("map", ...), ":num")):
-            terms = m[1][1:]
+            terms = exp[1][1:]
             return ("array", m.num, ("map",) + tuple(terms))
         if m := match(exp, ("add", ":num", ("map", ...))):
-            terms = m[2][1:]
+            terms = exp[2][1:]
             return ("array", m.num, ("map",) + tuple(terms))
 
         if m := match(exp, ("add", ("var", ":x"), ("array", ":idx", ":loc"))):
