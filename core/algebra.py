@@ -442,7 +442,7 @@ def to_bytes(exp):
                 if bi == 0:
                     res.append(by)
                 else:
-                    raise
+                    raise NotImplementedError()
 
             elif opcode(e) == "mul" and len(e) == 3:
                 if e[1] % 8 == 0:
@@ -450,10 +450,10 @@ def to_bytes(exp):
                 elif opcode(e[2]) == "mask_shl" and e[2][:4] == ("mask_shl", 253, 0, 3):
                     res.append(("mul", e[1], e[2][4]))
                 else:
-                    raise
+                    raise NotImplementedError()
 
             else:
-                raise
+                raise NotImplementedError()
 
         return ("add",) + tuple(res), 0
 
@@ -464,7 +464,7 @@ def divisible_bytes(exp):
     # returns true if an expression can be divided by 8 (into bytes) without exceptions raised etc
     try:
         return True if to_bytes(exp)[1] == 0 else False
-    except:
+    except Exception:
         return False
 
 

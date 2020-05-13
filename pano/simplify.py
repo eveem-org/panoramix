@@ -280,7 +280,6 @@ def simplify_exp(exp):
     if m := match(exp, ("bool", ("bool", ":e"))):
         exp = ("bool", m.e)
 
-
     if (m := match(exp, ("eq", ":sth", 0))) or (m := match(exp, ("eq", 0, ":sth"))):
         exp = ("iszero", m.sth)
 
@@ -302,7 +301,7 @@ def simplify_exp(exp):
     if m := match(exp, ("mem", ("range", Any, 0))):
         return None  # sic. this happens usually in params to logs etc, we probably want None here
 
-    if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)):
+    if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)) > 1:
         return mask_op(m.exp2, size=size)
 
     # same thing is added in both expressions ?
@@ -711,6 +710,7 @@ def readability(trace):
                 )
             else:
                 res.append(("if", cond, readability(if_true), readability(if_false)))
+
             continue
 
         elif opcode(line) == "while":

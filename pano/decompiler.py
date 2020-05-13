@@ -264,15 +264,6 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
             # otherwise no irregular functions, so this is not needed :)
             print(C.gray + "#\n#  Regular functions\n#" + C.end + "\n")
 
-        else:
-            print(
-                "\n"
-                + C.gray
-                + "#\n#  No regular functions. That's it.\n#"
-                + C.end
-                + "\n\n"
-            )
-
         for func in func_list:
             hash = func.hash
 

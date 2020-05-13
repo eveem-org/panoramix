@@ -1,4 +1,5 @@
 import os
+import math
 import re
 import string
 from copy import copy, deepcopy
@@ -478,12 +479,12 @@ def to_exp2(num):  # checks if num is a power of 2, and if so, returns to which 
     if type(num) != int:
         return None
 
-    if num < 0:  # speed optimisation
+    if num < 1:
         return None
 
-    for i in range(256):
-        if num == 2 ** i:
-            return i
+    l = math.log2(num)
+    if l.is_integer():
+        return int(l)
 
     return None
 
