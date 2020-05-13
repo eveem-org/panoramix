@@ -301,7 +301,7 @@ def simplify_exp(exp):
     if m := match(exp, ("mem", ("range", Any, 0))):
         return None  # sic. this happens usually in params to logs etc, we probably want None here
 
-    if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)) > 1:
+    if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)) and size > 1:
         return mask_op(m.exp2, size=size)
 
     # same thing is added in both expressions ?
