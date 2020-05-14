@@ -1,6 +1,8 @@
 import dataclasses
 import io
+import json
 import logging
+import os
 import sys
 from contextlib import redirect_stdout
 
@@ -23,7 +25,6 @@ class Decompilation:
     text: str = ""
     asm: list = dataclasses.field(default_factory=list)
     json: dict = dataclasses.field(default_factory=dict)
-
 
 
 def decompile_bytecode(code: str, only_func_name=None) -> Decompilation:
@@ -140,7 +141,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
             if target > 1 and loader.lines[target][1] == "jumpdest":
                 target += 1
 
-            @timeout_decorator.timeout(60*3, use_signals=True)
+            @timeout_decorator.timeout(60 * 3, use_signals=True)
             def dec():
                 trace = VM(loader).run(target, stack=stack, timeout=60)
                 explain("Initial decompiled trace", trace[1:])
@@ -177,10 +178,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
 
     """
 
-    contract = Contract(
-        problems=problems,
-        functions=functions,
-    )
+    contract = Contract(problems=problems, functions=functions,)
 
     contract.postprocess()
 
@@ -191,8 +189,12 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
 
     try:
         decompilation.json = contract.json()
+        # This would raise a TypeError if it's not serializable, which is an
+        # important assumption people can make.
+        json.dump(decompilation.json, open(os.devnull, "w"))
     except Exception:
-        logger.exception("failed json dump")
+        logger.exception("Failed json serialization.")
+        decompilation.json = {}
 
     text_output = io.StringIO()
     with redirect_stdout(text_output):
