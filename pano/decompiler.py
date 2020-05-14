@@ -192,9 +192,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
     try:
         decompilation.json = contract.json()
     except Exception:
-        # .json is a nice to have, whatever crazy error happens we should
-        # still proceed with the rest of decompilation
-        logger.exception("failed json serialization")
+        logger.exception("failed json dump")
 
     text_output = io.StringIO()
     with redirect_stdout(text_output):

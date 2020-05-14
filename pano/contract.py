@@ -1,4 +1,3 @@
-import json
 import logging
 
 import pano.folder as folder
@@ -58,14 +57,12 @@ class Contract:
 
         self.stor_defs = {}
 
-    def json(self):
-        return json.dumps(
-            {
-                "problems": self.problems,
-                "stor_defs": self.stor_defs,
-                "functions": [f.serialize() for f in self.functions],
-            }
-        )
+    def json(self) -> dict:
+        return {
+            "problems": self.problems,
+            "stor_defs": self.stor_defs,
+            "functions": [f.serialize() for f in self.functions],
+        }
 
     def load(self, data):
         self.problems = data["problems"]
