@@ -3,7 +3,7 @@ import time
 import sys
 from copy import copy
 
-import core.arithmetic as arithmetic
+from core import arithmetic
 import utils.opcode_dict as opcode_dict
 from core.algebra import (
     add_op,
@@ -15,6 +15,7 @@ from core.algebra import (
     or_op,
     sub_op,
     to_bytes,
+    CannotCompare
 )
 from core.arithmetic import is_zero, simplify_bool
 from pano.matcher import match
@@ -1002,6 +1003,10 @@ class VM(EasyCopy):
 
             stack.append("ext_call.success")
 
-            if lt_op(0, ret_len):
+            try:
+                if lt_op(0, ret_len):
+                    return_data = ("ext_call.return_data", 0, ret_len)
+                    trace(("setmem", ("range", ret_start, ret_len), return_data))
+            except CannotCompare:
                 return_data = ("ext_call.return_data", 0, ret_len)
                 trace(("setmem", ("range", ret_start, ret_len), return_data))
