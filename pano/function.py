@@ -255,7 +255,7 @@ class Function(EasyCopy):
         }
         try:
             assert json.dumps(res)  # check if serialisation works well
-        except:
+        except Exception:
             logger.error("failed serialization %s", self.name)
             raise
 

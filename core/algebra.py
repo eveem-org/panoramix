@@ -48,7 +48,7 @@ def simplify(exp):
         for e in els:
             try:
                 res = max_op(res, e)
-            except:
+            except Exception:
                 return ("max",) + tuple(els)
         return res
 

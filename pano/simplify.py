@@ -2065,7 +2065,7 @@ def while_touches_mem(line, mem_idx):
     #    try:
     setmems = extract_setmems(line)
     #    setmems = find_setmems(path)
-    #    except:
+    #    except Exception:
     #        return True
 
     if len(setmems) == 0:

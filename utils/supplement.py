@@ -161,7 +161,7 @@ def crawl_abis_from_cache():
 
     try:
         from web3 import Web3
-    except:
+    except Exception:
         print(
             "install web3:\n\t`pip install web3`"
         )  # the only dependency in the project :D

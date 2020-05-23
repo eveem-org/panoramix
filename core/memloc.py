@@ -204,7 +204,7 @@ def split_or(value):
 
     try:
         ret_rows.sort(key=lambda row: cmp_to_key(row[1]))  # sort by offsets, descending
-    except:
+    except Exception:
         return [(256, 0, orig_value)]
 
     # insert zeroes into empty spaces

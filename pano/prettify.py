@@ -406,7 +406,7 @@ def pretty_line(r, add_color=True):
                             f"{idx} {p}".split(" ") for idx, p in enumerate(fparams)
                         ]:
                             p_list.append((ptype, pname, res_params[int(idx)]))
-                    except:
+                    except Exception:
                         logger.warning(f"weird log {e} {fparams}")
                         yield (f"log {e}")
                         return

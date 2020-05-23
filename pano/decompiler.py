@@ -27,6 +27,18 @@ class Decompilation:
     json: dict = dataclasses.field(default_factory=dict)
 
 
+# Derives from BaseException so it bypasses all the "except Exception" that are
+# all around Panoramix code.
+class TimeoutInterrupt(BaseException):
+    """Thrown when a timeout occurs in the `timeout` context manager."""
+
+    def __init__(self, value="Timed Out"):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
 def decompile_bytecode(code: str, only_func_name=None) -> Decompilation:
     loader = Loader()
     loader.load_binary(code)  # Code is actually hex.
@@ -141,7 +153,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
             if target > 1 and loader.lines[target][1] == "jumpdest":
                 target += 1
 
-            @timeout_decorator.timeout(60 * 3, use_signals=True)
+            @timeout_decorator.timeout(60 * 3, timeout_exception=TimeoutInterrupt)
             def dec():
                 trace = VM(loader).run(target, stack=stack, timeout=60)
                 explain("Initial decompiled trace", trace[1:])
@@ -164,7 +176,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
 
             functions[hash] = Function(hash, trace)
 
-        except Exception:
+        except (Exception, TimeoutInterrupt):
             problems[hash] = fname
 
             logger.exception("Problem with %s%s", fname, C.end)
