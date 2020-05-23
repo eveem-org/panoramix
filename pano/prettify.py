@@ -383,7 +383,7 @@ def pretty_line(r, add_color=True):
         #        print(res_events)
         res_events = tuple((x[:10] if x[:2] == "0x" else x) for x in res_events)
         for e in res_events:
-            if "(" not in e:
+            if e.count("(") != 1:
                 yield col(
                     f"log {e}{':' if len(res_params)>0 else ''} {', '.join(res_params)}",
                     COLOR_GRAY,
