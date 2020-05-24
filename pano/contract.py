@@ -1,3 +1,4 @@
+import collections
 import logging
 
 import pano.folder as folder
@@ -117,7 +118,15 @@ class Contract:
             else:
                 return []
 
-        mlist = set(find_f_list([f.ast for f in self.functions], find_stor_masks))
+        stor_masks = frozenset(
+            find_f_list([f.ast for f in self.functions], find_stor_masks)
+        )
+
+        stor_loc_to_masks = collections.defaultdict(set)
+        stor_name_to_masks = collections.defaultdict(set)
+        for mask in stor_masks:
+            stor_loc_to_masks[get_loc(mask)].add(mask)
+            stor_name_to_masks[get_name(mask)].add(mask)
 
         def cleanup(exp):
 
@@ -141,54 +150,52 @@ class Contract:
                 ),
             ):
                 e_type, e_field, e_name, loc = m.e_type, m.e_field, m.e_name, m.loc
-                for m in mlist:
-                    if get_name(m) == e_name:
-                        assert (
-                            get_loc(m) == loc
-                        )  # otherwise, two locs with the same name?
+                for mask in stor_name_to_masks[e_name]:
+                    assert (
+                        get_loc(mask) == loc
+                    )  # otherwise, two locs with the same name?
 
-                        assert (
-                            ma := match(
-                                m, ("type", ":m_type", ("field", ":m_field", Any))
-                            )
+                    assert (
+                        m := match(
+                            mask, ("type", ":m_type", ("field", ":m_field", Any))
                         )
-                        if ma.m_field != e_field or ma.m_type != e_type:
-                            return exp
-                else:
-                    return ("stor", ("name", e_name, loc))
+                    )
+                    if m.m_field != e_field or m.m_type != e_type:
+                        return exp
 
-            elif m := match(exp, ("type", ":e_type", ":stor")):
+                return ("stor", ("name", e_name, loc))
+
+            if m := match(exp, ("type", ":e_type", ":stor")):
                 e_type, stor = m.e_type, m.stor
                 e_loc = get_loc(stor)
 
-                for m in mlist:
-                    if match(m, ("type", 256, ("field", 0, ("stor", ("length", Any))))):
-                        continue
-
-                    if get_loc(m) == e_loc:
-                        assert (ma := match(m, ("type", ":m_type", Any)))
-                        if ma.m_type != e_type:
+                for mask in stor_loc_to_masks[e_loc]:
+                    if not match(
+                        mask, ("type", 256, ("field", 0, ("stor", ("length", Any))))
+                    ):
+                        assert (m := match(mask, ("type", ":m_type", Any)))
+                        if m.m_type != e_type:
                             return exp
-                else:
-                    return stor
 
-            elif m := match(exp, ("field", ":e_off", ":stor")):
+                return stor
+
+            if m := match(exp, ("field", ":e_off", ":stor")):
                 e_off, stor = m.e_off, m.stor
                 e_loc = get_loc(stor)
 
-                for m in mlist:
-                    if match(m, ("type", 256, ("field", 0, ("stor", ("length", Any))))):
-                        continue
-
-                    if get_loc(m) == e_loc:
-                        assert (ma := match(m, ("type", Any, ("field", ":m_off", Any))))
-                        if ma.m_off != e_off:
+                for mask in stor_loc_to_masks[e_loc]:
+                    if not match(
+                        mask, ("type", 256, ("field", 0, ("stor", ("length", Any))))
+                    ):
+                        assert (
+                            m := match(mask, ("type", Any, ("field", ":m_off", Any)))
+                        )
+                        if m.m_off != e_off:
                             return exp
-                else:
-                    return stor
 
-            else:
-                return exp
+                return stor
+
+            return exp
 
         for f in self.functions:
             f.ast = replace_f(f.ast, cleanup)

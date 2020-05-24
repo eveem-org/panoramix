@@ -119,6 +119,8 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
         and the list of functions within the contract.
     """
 
+    logger.info("Running light execution to find functions.")
+
     loader.run(VM(loader, just_fdests=True))
 
     if len(loader.lines) == 0:
@@ -183,6 +185,8 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
 
             if "--strict" in sys.argv:
                 raise
+
+    logger.info("Functions decompilation finished, now doing post-processing.")
 
     """
 
