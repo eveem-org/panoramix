@@ -66,7 +66,7 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     keywords="ethereum evm decompiler Eveem.org",
-    packages=find_packages(exclude=["contrib", "docs", "tests"]) + ["."], # folder layout is a bit odd that's why we include the local folder as well
+    packages=find_packages(exclude=["contrib", "docs", "tests"]),
     install_requires=REQUIRED,
     tests_require=TESTS_REQUIRE,
     python_requires=REQUIRES_PYTHON,
