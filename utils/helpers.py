@@ -2,6 +2,7 @@ import os
 import math
 import re
 import string
+import logging
 from copy import copy, deepcopy
 
 COLOR_HEADER = "\033[95m"
@@ -37,6 +38,7 @@ colors = {
     "\033[94m": "184, 90, 190",  # "blue"
 }
 
+logger = logging.getLogger(__name__)
 
 def convert(text):
 
@@ -586,6 +588,7 @@ def replace_f(in_exp, f):
 
     keep_type = type(in_exp)
     res = keep_type(replace_f(e, f) for e in in_exp)
+
 
     return f(res)
 
