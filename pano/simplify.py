@@ -304,6 +304,9 @@ def simplify_exp(exp):
     if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)) and size > 1:
         return mask_op(m.exp2, size=size)
 
+    if (m := match(exp, ("mod", 0, Any))):
+        exp = 0
+
     # same thing is added in both expressions ?
     if (m := match(exp, (":op", ("add", ...), ("add", ...)))) and m.op in (
         "lt",
