@@ -62,7 +62,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
-        "Topic :: Software Development :: Disassembler",
+        "Topic :: Software Development :: Disassemblers",
         "Programming Language :: Python :: 3.8",
     ],
     keywords="ethereum evm decompiler Eveem.org",
