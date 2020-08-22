@@ -3,8 +3,8 @@ import logging
 import sys
 from copy import copy
 
-from core import arithmetic
-from core.algebra import (
+from panoramix.core import arithmetic
+from panoramix.core.algebra import (
     _max_op,
     add_ge_zero,
     add_op,
@@ -38,9 +38,9 @@ from core.algebra import (
     to_bytes,
     try_add,
 )
-from core.arithmetic import is_zero, to_real_int
-from core.masks import get_bit, to_mask, to_neg_mask
-from core.memloc import (
+from panoramix.core.arithmetic import is_zero, to_real_int
+from panoramix.core.masks import get_bit, to_mask, to_neg_mask
+from panoramix.core.memloc import (
     apply_mask_to_range,
     fill_mem,
     memloc_overwrite,
@@ -49,10 +49,16 @@ from core.memloc import (
     split_store,
     splits_mem,
 )
-from pano.matcher import Any, match
-from pano.prettify import explain, pformat_trace, pprint_repr, pprint_trace, pretty_repr
-from pano.simplify import simplify_trace
-from utils.helpers import (
+from panoramix.matcher import Any, match
+from panoramix.prettify import (
+    explain,
+    pformat_trace,
+    pprint_repr,
+    pprint_trace,
+    pretty_repr,
+)
+from panoramix.simplify import simplify_trace
+from panoramix.utils.helpers import (
     C,
     contains,
     find_f_list,
@@ -70,7 +76,7 @@ from utils.helpers import (
     walk_trace,
 )
 
-from .postprocess import cleanup_mul_1
+from panoramix.postprocess import cleanup_mul_1
 
 logger = logging.getLogger(__name__)
 logger.level = logging.CRITICAL  # switch to INFO for detailed

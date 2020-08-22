@@ -4,6 +4,8 @@ import re
 import string
 import logging
 from copy import copy, deepcopy
+from pathlib import Path
+from appdirs import user_cache_dir
 
 COLOR_HEADER = "\033[95m"
 COLOR_BLUE = "\033[94m"
@@ -628,3 +630,11 @@ def replace_f_stop(in_exp, f):
         res = list(res)
 
     return res
+
+
+def cache_dir() -> Path:
+    panoramix_cache_dir = Path(user_cache_dir("panoramix", "panoramix"))
+    if not panoramix_cache_dir.is_dir():
+        panoramix_cache_dir.mkdir(parents=True)
+
+    return panoramix_cache_dir

@@ -15,11 +15,11 @@
 #
 
 
-from pano.matcher import Any, match
-from utils.helpers import EasyCopy, all_concrete, cached, opcode, to_exp2
 import numbers
 
-from .variants import variants
+from panoramix.core.variants import variants
+from panoramix.matcher import Any, match
+from panoramix.utils.helpers import EasyCopy, all_concrete, cached, opcode, to_exp2
 
 
 class CannotCompare(Exception):
@@ -1097,7 +1097,8 @@ def _try_add(self, other):
         if (
             opcode(self_mask) == "mask_shl"
             and opcode(other_mask) == "mask_shl"
-            and isinstance(self_mask[1], numbers.Number) and isinstance(self_mask[2], numbers.Number)
+            and isinstance(self_mask[1], numbers.Number)
+            and isinstance(self_mask[2], numbers.Number)
             and self_mask[1] + self_mask[2] == 256
             and self_mask[2] == other_mask[1]
             and other_mask[2] == 0

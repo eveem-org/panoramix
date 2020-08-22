@@ -3,8 +3,8 @@ import logging
 import sys
 from copy import copy
 
-import core.arithmetic as arithmetic
-from core.algebra import (
+import panoramix.core.arithmetic as arithmetic
+from panoramix.core.algebra import (
     _max_op,
     add_ge_zero,
     add_op,
@@ -38,9 +38,9 @@ from core.algebra import (
     to_bytes,
     try_add,
 )
-from core.arithmetic import is_zero, to_real_int
-from core.masks import get_bit, to_mask, to_neg_mask
-from core.memloc import (
+from panoramix.core.arithmetic import is_zero, to_real_int
+from panoramix.core.masks import get_bit, to_mask, to_neg_mask
+from panoramix.core.memloc import (
     apply_mask_to_range,
     fill_mem,
     memloc_overwrite,
@@ -49,9 +49,15 @@ from core.memloc import (
     split_store,
     splits_mem,
 )
-from pano.matcher import Any, match
-from pano.prettify import explain, pformat_trace, pprint_repr, pprint_trace, pretty_repr
-from utils.helpers import (
+from panoramix.matcher import Any, match
+from panoramix.prettify import (
+    explain,
+    pformat_trace,
+    pprint_repr,
+    pprint_trace,
+    pretty_repr,
+)
+from panoramix.utils.helpers import (
     C,
     cached,
     contains,
@@ -71,8 +77,8 @@ from utils.helpers import (
     walk_trace,
 )
 
-from .postprocess import cleanup_mul_1
-from .rewriter import postprocess_exp, postprocess_trace, rewrite_string_stores
+from panoramix.postprocess import cleanup_mul_1
+from panoramix.rewriter import postprocess_exp, postprocess_trace, rewrite_string_stores
 
 logger = logging.getLogger(__name__)
 logger.level = logging.CRITICAL  # switch to INFO for detailed
@@ -301,10 +307,14 @@ def simplify_exp(exp):
     if m := match(exp, ("mem", ("range", Any, 0))):
         return None  # sic. this happens usually in params to logs etc, we probably want None here
 
-    if (m := match(exp, ("mod", ":exp2", ":int:num"))) and (size := to_exp2(m.num)) and size > 1:
+    if (
+        (m := match(exp, ("mod", ":exp2", ":int:num")))
+        and (size := to_exp2(m.num))
+        and size > 1
+    ):
         return mask_op(m.exp2, size=size)
 
-    if (m := match(exp, ("mod", 0, Any))):
+    if (m := match(exp, ("mod", 0, Any))) :
         exp = 0
 
     # same thing is added in both expressions ?
@@ -1142,6 +1152,7 @@ def apply_constraint(exp, constr):
     return exp
 
     if match(constr, ("mask_shl", 5, 0, 0, Any)):
+
         def f(x):
             if m := match(
                 x, ("mask_shl", ":int:size", 5, ":int:shl", ("add", 31, ":val"))
@@ -1155,6 +1166,7 @@ def apply_constraint(exp, constr):
         return replace_f(exp, f)
 
     if match(constr, ("iszero", ("mask_shl", 5, 0, 0, Any))):
+
         def f(x):
             if m := match(x, ("mask_shl", ":int:size", 5, 0, ("add", 31, ":val"))):
                 return ("mask_shl", m.size + 5, 0, 0, m.val)

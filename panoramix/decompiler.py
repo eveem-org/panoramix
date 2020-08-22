@@ -8,14 +8,14 @@ from contextlib import redirect_stdout
 
 import timeout_decorator
 
-import pano.folder as folder
-from pano.contract import Contract
-from pano.function import Function
-from pano.loader import Loader
-from pano.prettify import explain, pprint_repr, pprint_trace, pretty_type
-from pano.vm import VM
-from pano.whiles import make_whiles
-from utils.helpers import C, rewrite_trace
+import panoramix.folder as folder
+from panoramix.contract import Contract
+from panoramix.function import Function
+from panoramix.loader import Loader
+from panoramix.prettify import explain, pprint_repr, pprint_trace, pretty_type
+from panoramix.vm import VM
+from panoramix.whiles import make_whiles
+from panoramix.utils.helpers import C, rewrite_trace
 
 logger = logging.getLogger(__name__)
 

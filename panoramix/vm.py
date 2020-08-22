@@ -3,9 +3,9 @@ import time
 import sys
 from copy import copy
 
-from core import arithmetic
-import utils.opcode_dict as opcode_dict
-from core.algebra import (
+from panoramix.core import arithmetic
+import panoramix.utils.opcode_dict as opcode_dict
+from panoramix.core.algebra import (
     add_op,
     bits,
     lt_op,
@@ -15,12 +15,12 @@ from core.algebra import (
     or_op,
     sub_op,
     to_bytes,
-    CannotCompare
+    CannotCompare,
 )
-from core.arithmetic import is_zero, simplify_bool
-from pano.matcher import match
-from pano.prettify import pprint_trace
-from utils.helpers import (
+from panoramix.core.arithmetic import is_zero, simplify_bool
+from panoramix.matcher import match
+from panoramix.prettify import pprint_trace
+from panoramix.utils.helpers import (
     C,
     EasyCopy,
     all_concrete,
@@ -201,7 +201,9 @@ class VM(EasyCopy):
         time_start = time.monotonic()
 
         def should_quit():
-            return node_count > MAX_NODE_COUNT or (timeout and (time.monotonic() - time_start > timeout))
+            return node_count > MAX_NODE_COUNT or (
+                timeout and (time.monotonic() - time_start > timeout)
+            )
 
         func_node = Node(vm=self, start=start, safe=True, stack=list(stack))
         trace = [
@@ -264,8 +266,11 @@ class VM(EasyCopy):
                 break
 
         if should_quit():
-            logger.warning("VM stopped prematurely. Node count %i and seconds %i.",
-                           node_count, time.monotonic() - time_start)
+            logger.warning(
+                "VM stopped prematurely. Node count %i and seconds %i.",
+                node_count,
+                time.monotonic() - time_start,
+            )
 
         tr = root.make_trace()
         return tr

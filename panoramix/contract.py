@@ -1,11 +1,11 @@
 import collections
 import logging
 
-import pano.folder as folder
-import pano.sparser as sparser
-from pano.matcher import Any, match
-from pano.prettify import pprint_ast, pprint_trace, prettify, pretty_stor
-from utils.helpers import (
+import panoramix.folder as folder
+import panoramix.sparser as sparser
+from panoramix.matcher import Any, match
+from panoramix.prettify import pprint_ast, pprint_trace, prettify, pretty_stor
+from panoramix.utils.helpers import (
     COLOR_GREEN,
     ENDC,
     find_f_list,
@@ -16,8 +16,8 @@ from utils.helpers import (
     tuplify,
 )
 
-from .function import Function
-from .sparser import get_loc, get_name
+from panoramix.function import Function
+from panoramix.sparser import get_loc, get_name
 
 logger = logging.getLogger(__name__)
 

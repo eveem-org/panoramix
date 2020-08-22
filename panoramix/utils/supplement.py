@@ -1,27 +1,29 @@
-import sqlite3
 import json
-from zipfile import ZipFile
-import urllib.request
-import sys
-import time
-import os
 import logging
 import lzma
+import os
+import sqlite3
+import sys
+import time
+import urllib.request
+from pathlib import Path
+from zipfile import ZipFile
 
-from .helpers import opcode, cached
-from .helpers import (
-    COLOR_HEADER,
+from panoramix.utils.helpers import (
     COLOR_BLUE,
-    COLOR_OKGREEN,
-    COLOR_WARNING,
-    FAIL,
-    ENDC,
     COLOR_BOLD,
-    COLOR_UNDERLINE,
-    COLOR_GREEN,
     COLOR_GRAY,
+    COLOR_GREEN,
+    COLOR_HEADER,
+    COLOR_OKGREEN,
+    COLOR_UNDERLINE,
+    COLOR_WARNING,
+    ENDC,
+    FAIL,
+    cache_dir,
+    cached,
+    opcode,
 )
-
 
 """
     a module for management of bytes4 signatures from the database
@@ -54,14 +56,26 @@ logger = logging.getLogger(__name__)
 conn = None
 
 
+def supplements_path():
+    return cache_dir() / "supplement.db"
+
+
 def check_supplements():
-    if not os.path.isfile("cache/supplement.db"):
-        logger.info("decompressing supplement.db.xz into cache/supplement.db...")
-        with lzma.open("supplement.db.xz") as inf, open("cache/supplement.db", "wb") as outf:
-            while (buf := inf.read(1024*1024)):
+    panoramix_supplements = supplements_path()
+    if not panoramix_supplements.is_file():
+        compressed_supplements = (
+            Path(__file__).parent.parent / "data" / "supplement.db.xz"
+        )
+        logger.info(
+            "Decompressing %s into %s...", compressed_supplements, panoramix_supplements
+        )
+        with lzma.open(compressed_supplements) as inf, panoramix_supplements.open(
+            "wb"
+        ) as outf:
+            while (buf := inf.read(1024 * 1024)) :
                 outf.write(buf)
 
-    assert os.path.isfile("cache/supplement.db")
+    assert panoramix_supplements.is_file()
 
 
 def _cursor():
@@ -70,11 +84,11 @@ def _cursor():
     check_supplements()
 
     if conn is None:
-        conn = sqlite3.connect("cache/supplement.db")
+        conn = sqlite3.connect(supplements_path())
 
-    #try:
+    # try:
     c = conn.cursor()
-    #except Exception:
+    # except Exception:
     #    # fails in multi-threading, this should help
     #    conn = sqlite3.connect("supplement.db")
     #    return conn.cursor()
@@ -108,11 +122,12 @@ def fetch_sigs(hash):
 def fetch_sig(hash):
     if type(hash) == str:
         hash = int(hash, 16)
-    hash = '{:#010x}'.format(hash)
+    hash = "{:#010x}".format(hash)
 
     c = _cursor()
     c.execute(
-        "SELECT hash, name, folded_name, params, cooccurs from functions where hash=?", (hash,)
+        "SELECT hash, name, folded_name, params, cooccurs from functions where hash=?",
+        (hash,),
     )
 
     results = c.fetchall()
@@ -146,18 +161,13 @@ def crawl_abis_from_cache():
     # and we don't want to import stuff unnecessarily.
 
     import json
-
     import os
+    import re
+    import sqlite3
+    import sys
+    import time
     import urllib
     import urllib.request
-
-    import time
-
-    import re
-
-    import sqlite3
-
-    import sys
 
     try:
         from web3 import Web3

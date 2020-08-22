@@ -5,9 +5,9 @@ import os
 import os.path
 import sys
 
-from pano.matcher import Any, match
+from panoramix.matcher import Any, match
 
-from .helpers import (
+from panoramix.utils.helpers import (
     COLOR_BLUE,
     COLOR_BOLD,
     COLOR_GRAY,
@@ -21,8 +21,9 @@ from .helpers import (
     cleanup_mul_1,
     colorize,
     opcode,
+    cache_dir,
 )
-from .supplement import fetch_sigs
+from panoramix.utils.supplement import fetch_sigs
 
 logger = logging.getLogger(__name__)
 
@@ -163,14 +164,15 @@ def make_abi(hash_targets):
     hash_name = hashlib.sha256(hash_name).hexdigest()
 
     dir_name = (
-        "cache/pabi/" + hash_name[:3] + "/"
+        cache_dir() / "pabi" / hash_name[:3]
     )  #:3, because there's not '0x' at the beginning
-    os.makedirs(dir_name, exist_ok=True)
+    if not dir_name.is_dir():
+        dir_name.mkdir(parents=True)
 
-    cache_fname = dir_name + hash_name + ".pabi"
+    cache_fname = dir_name / (hash_name + ".pabi")
 
-    if os.path.isfile(cache_fname):
-        with open(cache_fname) as f:
+    if cache_fname.is_file():
+        with cache_fname.open() as f:
             _abi = json.loads(f.read())
         logger.info("Cache for PABI found.")
         return _abi
@@ -215,7 +217,7 @@ def make_abi(hash_targets):
 
     _abi = result
 
-    with open(cache_fname, "w+") as f:
+    with cache_fname.open("w+") as f:
         f.write(json.dumps(result, indent=2))
 
     logger.info("Cache for PABI generated.")

@@ -3,8 +3,8 @@ import logging
 from copy import copy
 from time import gmtime, strftime
 
-import core.arithmetic as arithmetic
-from core.algebra import (
+import panoramix.core.arithmetic as arithmetic
+from panoramix.core.algebra import (
     _max_op,
     add_ge_zero,
     add_op,
@@ -37,9 +37,9 @@ from core.algebra import (
     to_bytes,
     try_add,
 )
-from core.arithmetic import is_zero, to_real_int
-from core.masks import get_bit, to_mask, to_neg_mask
-from core.memloc import (
+from panoramix.core.arithmetic import is_zero, to_real_int
+from panoramix.core.masks import get_bit, to_mask, to_neg_mask
+from panoramix.core.memloc import (
     apply_mask_to_range,
     memloc_overwrite,
     range_overlaps,
@@ -48,9 +48,9 @@ from core.memloc import (
     split_store,
     splits_mem,
 )
-from pano.matcher import Any, match
-from pano.prettify import pformat_trace, pprint_trace
-from utils.helpers import (
+from panoramix.matcher import Any, match
+from panoramix.prettify import pformat_trace, pprint_trace
+from panoramix.utils.helpers import (
     contains,
     find_f_list,
     find_f_set,

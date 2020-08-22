@@ -5,8 +5,8 @@
     Assumes that the trace is a tree structure (that is - needs to be run *before* the folder)
 
 """
-from core.algebra import minus_op
-from utils.helpers import opcode
+from panoramix.core.algebra import minus_op
+from panoramix.utils.helpers import opcode
 
 
 def cleanup_mul_1(trace):

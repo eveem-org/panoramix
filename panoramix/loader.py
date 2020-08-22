@@ -4,8 +4,8 @@ import os
 import os.path
 import traceback
 
-from pano.matcher import match
-from utils.helpers import (
+from panoramix.matcher import match
+from panoramix.utils.helpers import (
     COLOR_GRAY,
     ENDC,
     EasyCopy,
@@ -14,10 +14,11 @@ from utils.helpers import (
     find_f_list,
     padded_hex,
     pretty_bignum,
+    cache_dir,
 )
-from utils.opcode_dict import opcode_dict
-from utils.signatures import get_func_name, make_abi
-from utils.supplement import fetch_sig
+from panoramix.utils.opcode_dict import opcode_dict
+from panoramix.utils.signatures import get_func_name, make_abi
+from panoramix.utils.supplement import fetch_sig
 
 logger = logging.getLogger(__name__)
 
@@ -84,13 +85,15 @@ class Loader(EasyCopy):
         assert address.isalnum()
         address = address.lower()
 
-        dir_name = "cache/code/" + address[:5] + "/"
-        os.makedirs(dir_name, exist_ok=True)
-        cache_fname = f"{dir_name}{address}.bin"
+        dir_ = cache_dir() / "code" / address[:5]
+        if not dir_.is_dir():
+            dir_.mkdir(parents=True)
 
-        if os.path.isfile(cache_fname):
+        cache_fname = dir_ / f"{address}.bin"
+
+        if cache_fname.is_file():
             logger.info("Code for %s found in cache...", address)
-            with open(cache_fname) as source_file:
+            with cache_fname.open() as source_file:
                 code = source_file.read().strip()
         else:
             logger.info("Fetching code for %s...", address)
@@ -99,7 +102,7 @@ class Loader(EasyCopy):
 
             code = w3.eth.getCode(Web3.toChecksumAddress(address)).hex()[2:]
             if code:
-                with open(cache_fname, "w+") as f:
+                with cache_fname.open("w+") as f:
                     f.write(code)
 
         self.load_binary(code)

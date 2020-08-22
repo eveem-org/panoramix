@@ -15,11 +15,11 @@
 import logging
 from copy import copy
 
-import core.algebra as algebra
-from pano.matcher import Any, match
-from utils.helpers import opcode
+import panoramix.core.algebra as algebra
+from panoramix.matcher import Any, match
+from panoramix.utils.helpers import opcode
 
-from .masks import get_bit
+from panoramix.core.masks import get_bit
 
 logger = logging.getLogger(__name__)
 

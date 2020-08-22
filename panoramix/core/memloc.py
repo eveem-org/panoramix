@@ -1,10 +1,10 @@
 import logging
 import sys
 
-from pano.matcher import Any, match
-from utils.helpers import before_after, cached, contains, is_array, opcode, replace
+from panoramix.matcher import Any, match
+from panoramix.utils.helpers import before_after, cached, contains, is_array, opcode, replace
 
-from .algebra import (
+from panoramix.core.algebra import (
     CannotCompare,
     add_ge_zero,
     add_op,
@@ -38,7 +38,7 @@ from .algebra import (
     to_bytes,
     try_add,
 )
-from .masks import find_mask
+from panoramix.core.masks import find_mask
 
 logger = logging.getLogger(__name__)
 

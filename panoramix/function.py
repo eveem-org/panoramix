@@ -3,11 +3,11 @@ import json
 import logging
 from copy import deepcopy
 
-from core.arithmetic import simplify_bool
-from core.masks import mask_to_type, type_to_mask
-from pano.matcher import Any, match
-from pano.prettify import explain_text, pprint_logic, prettify
-from utils.helpers import (
+from panoramix.core.arithmetic import simplify_bool
+from panoramix.core.masks import mask_to_type, type_to_mask
+from panoramix.matcher import Any, match
+from panoramix.prettify import explain_text, pprint_logic, prettify
+from panoramix.utils.helpers import (
     COLOR_BLUE,
     COLOR_BOLD,
     COLOR_GRAY,
@@ -26,7 +26,7 @@ from utils.helpers import (
     opcode,
     replace_f,
 )
-from utils.signatures import (
+from panoramix.utils.signatures import (
     get_abi_name,
     get_func_name,
     get_func_params,

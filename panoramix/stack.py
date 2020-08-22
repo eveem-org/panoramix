@@ -1,11 +1,11 @@
 import logging
 from copy import copy
 
-import core.arithmetic as arithmetic
-from core.algebra import mask_op, neg_mask_op
-from core.masks import to_mask, to_neg_mask
-from pano.prettify import prettify
-from utils.helpers import EasyCopy, opcode, to_exp2
+import panoramix.core.arithmetic as arithmetic
+from panoramix.core.algebra import mask_op, neg_mask_op
+from panoramix.core.masks import to_mask, to_neg_mask
+from panoramix.prettify import prettify
+from panoramix.utils.helpers import EasyCopy, opcode, to_exp2
 
 logger = logging.getLogger(__name__)
 

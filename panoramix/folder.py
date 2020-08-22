@@ -1,9 +1,9 @@
 import logging
 
-from core.arithmetic import comp_bool, is_zero, simplify_bool
-from pano.matcher import match
-from pano.prettify import prettify
-from utils.helpers import (
+from panoramix.core.arithmetic import comp_bool, is_zero, simplify_bool
+from panoramix.matcher import match
+from panoramix.prettify import prettify
+from panoramix.utils.helpers import (
     COLOR_BLUE,
     COLOR_BOLD,
     COLOR_GRAY,

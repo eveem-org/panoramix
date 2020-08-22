@@ -1,12 +1,12 @@
+import cProfile
 import logging
 import sys
-import cProfile
 
 import coloredlogs
 import timeout_decorator
 
-from utils.helpers import C
-from pano.decompiler import decompile_address, decompile_bytecode
+from panoramix.decompiler import decompile_address, decompile_bytecode
+from panoramix.utils.helpers import C
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ elif "--errors" in sys.argv:
 else:
     log_level = logging.INFO
 
-logging.getLogger("pano.matcher").setLevel(logging.INFO)
+logging.getLogger("panoramix.matcher").setLevel(logging.INFO)
 
 coloredlogs.install(
     level=log_level,
@@ -63,7 +63,6 @@ addr_shortcuts = {
 }
 
 
-
 def print_decompilation(this_addr):
     if this_addr.lower() in addr_shortcuts:
         this_addr = addr_shortcuts[this_addr.lower()]
@@ -73,7 +72,7 @@ def print_decompilation(this_addr):
         if not sys.argv[2].startswith("--"):
             function_name = sys.argv[2]
 
-    if this_addr == '-':
+    if this_addr == "-":
         this_addr = sys.stdin.read().strip()
 
     if len(this_addr) == 42:
@@ -84,11 +83,11 @@ def print_decompilation(this_addr):
     print(decompilation.text)
 
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) == 1:
         print(
             f"""
-        python3 panoramix.py [address|shortcut|-] [func_name] [--verbose] [--silent] [--profile]
+        panoramix [address|shortcut|-] [func_name] [--verbose] [--silent] [--profile]
 
             address: {C.gray}e.g. 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d
                     you can provide multiple, separating with comma{C.end}
@@ -113,3 +112,6 @@ if __name__ == '__main__':
     else:
         print_decompilation(sys.argv[1])
 
+
+if __name__ == "__main__":
+    main()

@@ -3,8 +3,8 @@ import sys
 from copy import deepcopy
 from functools import partial
 
-import core.arithmetic as arithmetic
-from core.algebra import (
+import panoramix.core.arithmetic as arithmetic
+from panoramix.core.algebra import (
     add_op,
     apply_mask,
     ge_zero,
@@ -16,11 +16,11 @@ from core.algebra import (
     sub_op,
     to_bytes,
 )
-from core.arithmetic import is_zero, simplify_bool
-from core.masks import get_bit, mask_to_type
-from pano.loader import Loader
-from pano.matcher import Any, match
-from utils.helpers import (
+from panoramix.core.arithmetic import is_zero, simplify_bool
+from panoramix.core.masks import get_bit, mask_to_type
+from panoramix.loader import Loader
+from panoramix.matcher import Any, match
+from panoramix.utils.helpers import (
     COLOR_BLUE,
     COLOR_BOLD,
     COLOR_GRAY,
@@ -44,7 +44,7 @@ from utils.helpers import (
     replace_lines,
     to_exp2,
 )
-from utils.signatures import get_param_name
+from panoramix.utils.signatures import get_param_name
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 import logging
 
-from core.algebra import divisible_bytes, minus_op, safe_le_op, to_bytes
-from core.masks import mask_to_type
-from pano.matcher import Any, match
-from pano.prettify import pprint_trace, pretty_stor
-from utils.helpers import (
+from panoramix.core.algebra import divisible_bytes, minus_op, safe_le_op, to_bytes
+from panoramix.core.masks import mask_to_type
+from panoramix.matcher import Any, match
+from panoramix.prettify import pprint_trace, pretty_stor
+from panoramix.utils.helpers import (
     COLOR_GRAY,
     COLOR_GREEN,
     ENDC,
@@ -572,7 +572,7 @@ def _sparser(orig_storages):
         op, size, offset, idx = s
         assert op == "stor"
 
-        if m := match(idx, ('add', ':e')):
+        if m := match(idx, ("add", ":e")):
             idx = m.e
 
         if opcode(idx) == "add" and get_loc(idx) is None:

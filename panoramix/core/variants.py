@@ -1,4 +1,4 @@
-from utils.helpers import is_array, opcode
+from panoramix.utils.helpers import is_array, opcode
 
 """
 
