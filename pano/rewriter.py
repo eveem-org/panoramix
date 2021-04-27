@@ -4,6 +4,7 @@ from copy import copy
 import core.arithmetic as arithmetic
 import logging
 import collections
+from pano.matcher import match, Any
 
 from core.memloc import range_overlaps, splits_mem, memloc_overwrite, split_setmem, apply_mask_to_range, split_store, sizeof
 
@@ -39,7 +40,8 @@ from utils.profiler import *
 '''
 
 def postprocess_exp(exp):
-    if exp ~ ('data', *terms):
+    if opcode(exp) == 'data':
+        terms = exp[1:]
         # make arrays in data
         concrete = [t for t in terms if type(t) == int and t % 32 == 0]
         if len(concrete) == 1:
@@ -50,30 +52,29 @@ def postprocess_exp(exp):
                 arr = ('arr', ) + terms[loc:]
 
     # heuristics for cleaning up various misprocessed stuff
-    
-                if arr ~ ('arr', :l, (:op, _, l), ...) and is_array(op):
+
+                if (m := match(arr, ('arr', ':l', (':op', Any, ':l'), ...))) and is_array(m.op):
                     arr = arr[:3]
 
-                elif arr ~ ('arr', :l, ('mask_shl', ('mask_shl', 253, 0, 3, l), _, _, ('data', (:op, :st, l), ...), ...)) and is_array(op):
-                    arr = ('arr', l, (op, st, l))
-                
+                elif (m := match(arr, ('arr', ':l', ('mask_shl', ('mask_shl', 253, 0, 3, ':l'), Any, Any, ('data', (':op', ':st', ':l'), ...), ...)))) and is_array(m.op):
+                    arr = ('arr', m.l, (m.op, m.st, m.l))
+
                 t2 = tuple([arr if t == loc*32 else t for t in terms[:loc]])
                 return ('data', ) + t2
 
     # this would really require debugging as to why such thing happens, and a nicer cleanup.
     # but it's last minute fixes again :)
 
-    if exp ~ ('arr', :l, ('mask_shl', ('mask_shl', _, 0, 3, l), ('add', 256, _), ('add', -256, _), ('data', ('call.data', :s, l), ...), ...)):
-       return ('arr', l, ('call.data', s, l))
+    if m := match(exp, ('arr', ':l', ('mask_shl', ('mask_shl', Any, 0, 3, ':l'), ('add', 256, Any), ('add', -256, Any), ('data', ('call.data', ':s', ':l'), ...), ...))):
+       return ('arr', m.l, ('call.data', m.s, m.l))
 
-    
     return exp
 
 
 def postprocess_trace(line):
     '''
         let's find all the stuff like
-        
+
          if (some_len % 32) == 0:
             return Array(some_len, some_stuff)
          else:

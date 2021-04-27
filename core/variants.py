@@ -1,6 +1,6 @@
-from utils.helpers import opcode, is_array
+from utils.helpers import is_array, opcode
 
-'''
+"""
 
     for a given expression, returns variants of it with each value being 0 or 2^256-1
 
@@ -11,13 +11,12 @@ from utils.helpers import opcode, is_array
             ('ADD', MAX_number, 0),
             ('ADD', MAX_number, MAX_number)
 
-'''
+"""
 
 
+MAX_number = 2 ** 230 - 1
+MAX_number2 = 2 ** 230 - 1
 
-
-MAX_number = 2**230 - 1
-MAX_number2 = 2**230 - 1
 
 def variants(exp):
     var = extract_variables(exp)
@@ -25,23 +24,43 @@ def variants(exp):
         yield replace_dict(exp, p)
 
 
-'''
+"""
 
     implementation
 
-'''
+"""
+
 
 def extract_variables(exp):
     if type(exp) == int:
         return set()
 
-    if opcode(exp) in ('var', 'mem', 'cd', 'storage', 'call.data', 'sha3', 'calldatasize', ) or is_array(opcode(exp)):
+    if opcode(exp) in (
+        "var",
+        "mem",
+        "cd",
+        "storage",
+        "call.data",
+        "sha3",
+        "calldatasize",
+    ) or is_array(opcode(exp)):
         return set([exp])
 
-    if type(exp) == str and exp in ('x', 'y', 'z', 'sth', 'unknown', 'undefined', 'callvalue', 'number','timestamp', 'address'):
+    if type(exp) == str and exp in (
+        "x",
+        "y",
+        "z",
+        "sth",
+        "unknown",
+        "undefined",
+        "callvalue",
+        "number",
+        "timestamp",
+        "address",
+    ):
         return set([exp])
 
-    if type(exp) == str and exp != 'data' and 'data' in exp:
+    if type(exp) == str and exp != "data" and "data" in exp:
         return set([exp])
 
     if type(exp) != tuple:
@@ -62,11 +81,13 @@ def possibilities(var):
             yield {current: MAX_number}
             yield {current: MAX_number2}
 
-            if current == ('mem', ('range', 64, 32)):
+            if current == ("mem", ("range", 64, 32)):
                 yield {current: 96}
-            elif current == 'calldatasize':
-                yield {current: 6} # nasty hack for `sweeper` contract, try to remove and see what happens
-            else:                  # can theoretically cause bugs in other ones
+            elif current == "calldatasize":
+                yield {
+                    current: 6
+                }  # nasty hack for `sweeper` contract, try to remove and see what happens
+            else:  # can theoretically cause bugs in other ones
                 yield {current: 0}
 
         else:
@@ -76,9 +97,9 @@ def possibilities(var):
                 p[current] = MAX_number2
                 yield p
 
-                if current == ('mem', ('range', 64, 32)):
+                if current == ("mem", ("range", 64, 32)):
                     yield {current: 96}
-                elif current == 'calldatasize':
+                elif current == "calldatasize":
                     p[current] = 6
                 else:
                     p[current] = 0

@@ -81,12 +81,12 @@ class Contract():
     def postprocess(self):
         try:
             self.stor_defs = sparser.rewrite_functions(self.functions)
-        except:
+        except Exception:
             # this is critical, because it causes full contract to display very
             # badly, and cannot be limited in scope to just one affected function
-            logger.critical('Storage postprocessing failed. This is very bad!')
+            logger.exception('Storage postprocessing failed. This is very bad!')
             self.stor_defs = {}
-        
+
         for func in self.functions:
             def replace_names(exp):
                 if (exp ~ ('cd', int:idx)) and idx in func.params:
@@ -223,7 +223,7 @@ class Contract():
 
         def mask_storage(exp):
             if exp ~ ('stor', :size, :off, :idx):
-                if off < 0:
+                if isinstance(off, int) and  off < 0:
                     off = 0
                 return ('type', size, ('field', off, ('stor', idx)))
             else:

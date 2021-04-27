@@ -2,6 +2,7 @@
 from .algebra import add_op, lt_op, le_op, CannotCompare, to_bytes, safe_gt_zero, safe_le_op
 from utils.helpers import opcode, cached, before_after, contains, replace, is_array
 import logging
+from pano.matcher import match, Any
 
 import sys
 
@@ -13,8 +14,6 @@ logger.level = logging.CRITICAL# INFO
 
 from .masks import find_mask
 
-opcode = opcode
-
 from .algebra import simplify, calc_max, add_ge_zero, minus_op, sub_op, flatten_adds, max_to_add
 from .algebra import add_op, bits, mul_op, get_sign, safe_ge_zero, ge_zero, lt_op, safe_lt_op, safe_le_op
 from .algebra import simplify_max, le_op, max_op, safe_max_op, safe_min_op, min_op, or_op, neg_mask_op, mask_op
@@ -22,7 +21,9 @@ from .algebra import apply_mask_to_storage, apply_mask, try_add, all_concrete
 from .algebra import lt_op
 
 def apply_mask_to_range(memloc, size, offset):
-    assert memloc ~ ('range', :range_pos, :range_len)
+    assert (m := match(memloc, ('range', ':range_pos', ':range_len')))
+    range_pos = m.range_pos
+    range_len = m.range_len
 
     size_bytes, size_bits = to_bytes(size)
     offset_bytes, offset_bits = to_bytes(offset)
@@ -57,14 +58,15 @@ def split_or(value):
     if opcode(value) == 'mask_shl':
         value = ('or', value)
 
-    assert value ~ ('or', *terms)
+    opcode_, *terms = value
+    assert opcode_ == 'or'
 
 
     ret_rows = []
 
     for row in terms:
-        if row ~ ('bool', :arg):
-            row = ('mask_shl', 8, 0, 0, ('bool', arg)) # does weird things if size == 1, in loops.activateSafeMode
+        if m := match(row, ('bool', ':arg')):
+            row = ('mask_shl', 8, 0, 0, ('bool', m.arg)) # does weird things if size == 1, in loops.activateSafeMode
 
         if row == 'caller':
             row = ('mask_shl', 160, 0, 0, 'caller') # does weird things if size == 1, in loops.activateSafeMode
@@ -73,8 +75,8 @@ def split_or(value):
             row = ('mask_shl', 64, 0, 0, 'caller') # does weird things if size == 1, in loops.activateSafeMode
 
 
-        if row ~ ('mul', 1, :val):
-            row = val
+        if m := match(row, ('mul', 1, ':val')):
+            row = m.val
 
         if opcode(row) == 'mask_shl' and all_concrete(row):
             row = apply_mask(row[4] if row[4]<256 else 256, row[1], row[2], row[3])
@@ -84,23 +86,24 @@ def split_or(value):
             shl = 0
             row = ('mask_shl', size, offset, 0, row)
 
-        if row ~ ('mem', :mem_idx):
-            if opcode(mem_idx) != 'range':
-                mem_idx = ('range', mem_idx, 32)
+        if m := match(row, ('mem', ':mem_idx')):
+            if opcode(m.mem_idx) != 'range':
+                m.mem_idx = ('range', m.mem_idx, 32)
 
-            mem_begin = mem_idx[1]
-            mem_len = mem_idx[2]
+            mem_begin = m.mem_idx[1]
+            mem_len = m.mem_idx[2]
             ret_rows.append((bits(mem_len), 0, row))
             continue
 
-        if row ~ ('storage', :size, :off, :idx):
-            ret_rows.append((size, 0, row))
+        if m := match(row, ('storage', ':size', ':off', ':idx')):
+            ret_rows.append((m.size, 0, row))
             continue
 
         if opcode(row) != 'mask_shl':
             return [(256,0, value)]
 
-        assert row ~ ('mask_shl', :size, :offset, :shl, :value)
+        assert opcode(row) == 'mask_shl'
+        _, size, offset, shl, value = row
 
         stor_size = size
         stor_offset = add_op(offset, shl)
@@ -108,10 +111,10 @@ def split_or(value):
         if type(value) == int:
             value = apply_mask(value, size, offset, shl)
 
-        elif value ~ ('mem', :idx) and add_op(offset, shl) == 0:
-            new_memloc = apply_mask_to_range(idx, size, offset)
+        elif (m := match(value, ('mem', ':idx'))) and add_op(offset, shl) == 0:
+            new_memloc = apply_mask_to_range(m.idx, size, offset)
             value = ('mem', new_memloc)
-            
+
         else:
             value = mask_op(value, size=size, offset=offset, shl=shl)
 
@@ -132,10 +135,12 @@ def split_or(value):
         f_size, f_off, f_val = first
         s_size, s_off, s_val = second
 
-        if f_off == 0 \
-           and s_off ~ ('add', 256, ('mul', -1, ('mask_shl', 253, 0, 3, ('add', 32, ('mul', -1, ('mask_shl', 5, 0, 0, f_size[4])))))):
-            assert s_size ~ ('mask_shl', _, _, _, ('add', 32, ('mul', -1, ...))), s_size
-            return ret_rows
+        try:
+            if f_off == 0 and s_off == ('add', 256, ('mul', -1, ('mask_shl', 253, 0, 3, ('add', 32, ('mul', -1, ('mask_shl', 5, 0, 0, f_size[4])))))):
+                assert match(s_size, ('mask_shl', Any, Any, Any, ('add', 32, ('mul', -1, ...))))
+                return ret_rows
+        except (TypeError, IndexError):
+            pass
 
     try:
         ret_rows.sort(key = lambda row: cmp_to_key(row[1])) # sort by offsets, descending
@@ -480,7 +485,7 @@ def fill_mem(exp, mem_idx, mem_val):
 
     f = _fill_mem(exp, mem_idx, mem_val)
     return f
-    
+
 
 
 def _fill_mem(exp, split, split_val):
