@@ -181,6 +181,7 @@ def make_abi(hash_targets):
                         res = {'name':f['name'],
                                 'folded_name':f['folded_name'],
                                 'params':f['params'],}
+                        best_score = score
 
         res['target'] = target
 
