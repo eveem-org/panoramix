@@ -46,11 +46,6 @@ elif "--errors" in sys.argv:
 else:
     log_level = logging.INFO
 
-if "--timeout" in sys.argv:
-    timeout = int(sys.argv[sys.argv.index("--timeout") + 1])
-else:
-    timeout = 120
-
 logging.getLogger("pano.matcher").setLevel(logging.INFO)
 
 coloredlogs.install(
@@ -59,6 +54,11 @@ coloredlogs.install(
     datefmt="%H:%M:%S",
     field_styles={"asctime": {"color": "white", "faint": True}},
 )
+
+if "--timeout" in sys.argv:
+    timeout = int(sys.argv[sys.argv.index("--timeout") + 1])
+else:
+    timeout = 120
 
 
 VER = "17 Feb 2020"
