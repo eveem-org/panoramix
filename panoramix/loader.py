@@ -100,7 +100,7 @@ class Loader(EasyCopy):
             from web3 import Web3
             from web3.auto import w3
 
-            code = w3.eth.getCode(Web3.toChecksumAddress(address)).hex()[2:]
+            code = w3.eth.get_code(Web3.to_checksum_address(address)).hex()[2:]
             if code:
                 with cache_fname.open("w+") as f:
                     f.write(code)

@@ -38,3 +38,7 @@ I have decompiled all of mainnet, and make sure to decompile again on the latest
 You can access decompilations using Oko: https://oko.palkeo.com/
 
 Here is an example for cryptokitties: https://oko.palkeo.com/0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/code/
+
+## Caveats
+
+Windows is not supported currently.

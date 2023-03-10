@@ -129,7 +129,6 @@ class Contract:
             stor_name_to_masks[get_name(mask)].add(mask)
 
         def cleanup(exp):
-
             if m := match(exp, ("field", 0, ("stor", ("length", ":idx")))):
                 return ("stor", ("length", m.idx))
 

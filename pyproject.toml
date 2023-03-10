@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "panoramix"
+version = "0.5.0"
+description = "A python decompiler for the EVM."
+authors = ["palkeo <panoramix@palkeo.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+
+coloredlogs = "^15"
+requests = "^2"
+web3 = {version = "6.0.0-beta.8", allow-prereleases = true}
+timeout_decorator = "^0.5"
+appdirs = "^1.4"
+
+[tool.poetry.scripts]
+panoramix = "panoramix.__main__:main"
+
+[build-system]
+requires = ["poetry-core>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
