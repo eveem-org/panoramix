@@ -12,7 +12,6 @@ from panoramix.utils.helpers import opcode
 def cleanup_mul_1(trace):
     def cleanup_exp(exp):
         if type(exp) != tuple:
-
             return exp
 
         # mask_shl storage -> storage
@@ -50,7 +49,7 @@ def cleanup_mul_1(trace):
         if exp[:4] == ("mask_shl", 256, 0, 0):
             e = cleanup_exp(exp[4])
 
-            if type(e) == int and e < 0x100 ** 32:
+            if type(e) == int and e < 0x100**32:
                 return e
 
             if opcode(e) == "sha3":

@@ -104,9 +104,9 @@ class Contract:
 
     def make_asts(self):
         """
-            we need to do ast creation from the contract, not function level,
-            because some simplifications (type/field removal) require insight to all the functions,
-            not just a single one
+        we need to do ast creation from the contract, not function level,
+        because some simplifications (type/field removal) require insight to all the functions,
+        not just a single one
         """
 
         for func in self.functions:
@@ -231,7 +231,7 @@ class Contract:
                 ("array", ("mask_shl", ":size", ":off", ":int:shl", ":idx"), ":loc"),
             ):
                 size, off, shl, idx, loc = m.size, m.off, m.shl, m.idx, m.loc
-                r = 2 ** shl
+                r = 2**shl
                 e_loc = get_loc(loc)
 
                 for s in self.stor_defs:
@@ -299,7 +299,7 @@ class Contract:
                 and m.off in range(1, 9)
                 and m.size + m.off in [8, 16, 32, 64, 128, 256]
             ):
-                return ("div", ("mask", m.size + m.off, 0, m.e), 2 ** m.off)
+                return ("div", ("mask", m.size + m.off, 0, m.e), 2**m.off)
 
             elif exp == ("mask_shl", 32, 224, 0, ("cd", 0)):
                 return ("cd", 0)

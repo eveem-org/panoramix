@@ -14,8 +14,8 @@ from panoramix.utils.helpers import is_array, opcode
 """
 
 
-MAX_number = 2 ** 230 - 1
-MAX_number2 = 2 ** 230 - 1
+MAX_number = 2**230 - 1
+MAX_number2 = 2**230 - 1
 
 
 def variants(exp):
@@ -75,7 +75,6 @@ def extract_variables(exp):
 
 def possibilities(var):
     if len(var) > 0:
-
         current = var[0]
         if len(var) == 1:
             yield {current: MAX_number}

@@ -42,8 +42,8 @@ colors = {
 
 logger = logging.getLogger(__name__)
 
-def convert(text):
 
+def convert(text):
     for asci, html in colors.items():
         text = text.replace(asci, '<span style="color:rgb(' + html + ')">')
 
@@ -155,7 +155,7 @@ def cached(func):
         key = args + tuple(kwargs.items())
         try:
             return cache[key]
-        except TypeError: # If it contains lists.
+        except TypeError:  # If it contains lists.
             return func(*args, **kwargs)
         except KeyError:
             pass
@@ -447,7 +447,7 @@ def parse_data(value):
     if len(value) == 32 * 2 + 2:
         value = int(value, 16)
 
-        if value > 10 ** 9 and value // 10 ** 9 != 0:
+        if value > 10**9 and value // 10**9 != 0:
             value = hex(value)
         else:
             value = nice_int(value)
@@ -464,7 +464,7 @@ def parse_data(value):
 
         out2 = []
         for o in out:
-            if o > 10 ** 9 and o // 10 ** 9 != 0:
+            if o > 10**9 and o // 10**9 != 0:
                 out2.append(hex(o))
             else:
                 out2.append(o)
@@ -591,7 +591,6 @@ def replace_f(in_exp, f):
     keep_type = type(in_exp)
     res = keep_type(replace_f(e, f) for e in in_exp)
 
-
     return f(res)
 
 
@@ -614,7 +613,7 @@ def replace(in_exp, what, by_what):
 
 def replace_f_stop(in_exp, f):
     """Like replace_f, but the function returns None when no replacement needs
-       to be made. If it returns something we replace it and stop."""
+    to be made. If it returns something we replace it and stop."""
     modified_in_exp = f(in_exp)
     if modified_in_exp is not None:
         return modified_in_exp

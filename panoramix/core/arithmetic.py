@@ -23,9 +23,9 @@ from panoramix.core.masks import get_bit
 
 logger = logging.getLogger(__name__)
 
-UINT_256_CEILING = 2 ** 256
-UINT_255_MAX = 2 ** 255 - 1
-UINT_256_MAX = 2 ** 256 - 1
+UINT_256_CEILING = 2**256
+UINT_255_MAX = 2**255 - 1
+UINT_256_MAX = 2**256 - 1
 
 
 def to_real_int(exp):
@@ -313,7 +313,10 @@ def mod(value, mod):
 
 
 def smod(value, mod):
-    value, mod = map(unsigned_to_signed, (value, mod),)
+    value, mod = map(
+        unsigned_to_signed,
+        (value, mod),
+    )
 
     pos_or_neg = -1 if value < 0 else 1
 
@@ -348,7 +351,10 @@ def not_op(exp):
 
 
 def sdiv(numerator, denominator):
-    numerator, denominator = map(unsigned_to_signed, (numerator, denominator),)
+    numerator, denominator = map(
+        unsigned_to_signed,
+        (numerator, denominator),
+    )
 
     pos_or_neg = -1 if numerator * denominator < 0 else 1
 
@@ -359,7 +365,6 @@ def sdiv(numerator, denominator):
 
 
 def exp(base, exponent):
-
     if exponent == 0:
         return 1
     elif base == 0:
@@ -369,7 +374,6 @@ def exp(base, exponent):
 
 
 def signextend(bits, value):
-
     if bits <= 31:
         testbit = bits * 8 + 7
         sign_bit = 1 << testbit
@@ -382,7 +386,6 @@ def signextend(bits, value):
 
 
 def shl(shift_length, value):
-
     if shift_length >= 256:
         return 0
     else:
@@ -390,7 +393,6 @@ def shl(shift_length, value):
 
 
 def shr(shift_length, value):
-
     if shift_length >= 256:
         return 0
     else:
@@ -398,7 +400,6 @@ def shr(shift_length, value):
 
 
 def sar(shift_length, value):
-
     value = unsigned_to_signed(value)
 
     if shift_length >= 256:

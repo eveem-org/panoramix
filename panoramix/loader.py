@@ -131,7 +131,6 @@ class Loader(EasyCopy):
             # find default
 
             def find_default(exp):
-
                 if (m := match(exp, ("if", ":cond", ":if_true", ":if_false"))) and str(
                     ("cd", 0)
                 ) in str(m.cond):
@@ -168,7 +167,6 @@ class Loader(EasyCopy):
             return None
 
     def add_func(self, target, hash=None, name=None, stack=()):
-
         assert hash is not None or name is not None  # we need at least one
         assert not (hash is not None and name is not None)  # we don't want both
 

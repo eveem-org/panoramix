@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 def fold_stacks(self, latter, depth):
     """
 
-        When a loop is discovered, this function takes the stack from the beginningg
-        of the loop, and from the end of the loop, and tries to figure out the loop variables.
+    When a loop is discovered, this function takes the stack from the beginningg
+    of the loop, and from the end of the loop, and tries to figure out the loop variables.
 
-        It then returns a stack that has variables in it instead of values.
+    It then returns a stack that has variables in it instead of values.
 
     """
     assert len(self) == len(latter), (self, latter)
@@ -112,7 +112,6 @@ class Stack(EasyCopy):
             first[len(first) - idx] = el
 
     def jump_dests(self, jump_dests):
-
         res = []
 
         for el in self.stack:
@@ -191,7 +190,6 @@ class Stack(EasyCopy):
         return exp
 
     def cleanup(self):
-
         stack = self.stack
 
         for i, s in enumerate(stack):

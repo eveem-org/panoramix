@@ -72,7 +72,7 @@ def check_supplements():
         with lzma.open(compressed_supplements) as inf, panoramix_supplements.open(
             "wb"
         ) as outf:
-            while (buf := inf.read(1024 * 1024)) :
+            while buf := inf.read(1024 * 1024):
                 outf.write(buf)
 
     assert panoramix_supplements.is_file()

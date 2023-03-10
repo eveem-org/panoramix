@@ -142,19 +142,19 @@ def postprocess_exp(exp):
 
 def postprocess_trace(line):
     """
-        let's find all the stuff like
+    let's find all the stuff like
 
-         if (some_len % 32) == 0:
-            return Array(some_len, some_stuff)
-         else:
-            mem[...] = leftover
-            return Array(some_len, some_stuff, leftover)
+     if (some_len % 32) == 0:
+        return Array(some_len, some_stuff)
+     else:
+        mem[...] = leftover
+        return Array(some_len, some_stuff, leftover)
 
-        and replace it with just return Array(some_len, some_stuff)
+    and replace it with just return Array(some_len, some_stuff)
 
-        in theory this is incorrect, because perhaps program does something totally different
-        in the one branch, andd something entirely different in another.
-        but this cleans up tremendous amounts of output, and didn't find a counterexample yet.
+    in theory this is incorrect, because perhaps program does something totally different
+    in the one branch, andd something entirely different in another.
+    but this cleans up tremendous amounts of output, and didn't find a counterexample yet.
     """
 
     #    if line ~ ('setmem', ('range', :s, ('mask_shl', 251, 5, 0, ('add', 31, ('cd', ('add', 4, :param))))), ('data', ('call.data', ('add', 36, param), ('cd', ('add', 4, param))), ('mem', ...))):

@@ -185,7 +185,6 @@ class Node:
 
 class VM(EasyCopy):
     def __init__(self, loader, just_fdests=False):
-
         self.loader = loader
 
         # (line_no, op, param)
@@ -225,12 +224,11 @@ class VM(EasyCopy):
         """
 
         for j in range(20):  # 20
-
             for i in range(200):  # 300
                 """
 
-                    Find all the jumps, and expand them until
-                    the next jump.
+                Find all the jumps, and expand them until
+                the next jump.
 
                 """
 
@@ -303,7 +301,6 @@ class VM(EasyCopy):
                 node.trace = [loop_line]
 
     def continue_loops(self, root):
-
         loop_list = find_nodes(
             root,
             lambda n: n.trace is not None
@@ -395,7 +392,6 @@ class VM(EasyCopy):
         assert False
 
     def handle_jumps(self, trace, line, condition):
-
         i, op = line[0], line[1]
         stack = self.stack
 
@@ -486,7 +482,14 @@ class VM(EasyCopy):
                     trace.append(("jump", n_false))
                     return trace
 
-            trace.append(("if", if_condition, n_true, n_false,))
+            trace.append(
+                (
+                    "if",
+                    if_condition,
+                    n_true,
+                    n_false,
+                )
+            )
             logger.debug("jumpi -> if %s", trace[-1])
             return trace
 
@@ -498,12 +501,22 @@ class VM(EasyCopy):
                 trace.append((op, 0))
             else:
                 return_data = mem_load(p, n)
-                trace.append((op, return_data,))
+                trace.append(
+                    (
+                        op,
+                        return_data,
+                    )
+                )
 
             return trace
 
         elif op == "selfdestruct":
-            trace.append(("selfdestruct", stack.pop(),))
+            trace.append(
+                (
+                    "selfdestruct",
+                    stack.pop(),
+                )
+            )
             return trace
 
         elif op in ["stop", "assert_fail", "invalid"]:
@@ -567,7 +580,15 @@ class VM(EasyCopy):
             "smod",
             "sdiv",
         ]:
-            stack.append(arithmetic.eval((op, stack.pop(), stack.pop(),)))
+            stack.append(
+                arithmetic.eval(
+                    (
+                        op,
+                        stack.pop(),
+                        stack.pop(),
+                    )
+                )
+            )
 
         elif op[:4] == "push":
             stack.append(param)
@@ -622,13 +643,13 @@ class VM(EasyCopy):
                 sign = exp & (1 << 255)
                 if off >= 256:
                     if sign:
-                        stack.append(2 ** 256 - 1)
+                        stack.append(2**256 - 1)
                     else:
                         stack.append(0)
                 else:
                     shifted = exp >> off
                     if sign:
-                        shifted |= (2 ** 256 - 1) << (256 - off)
+                        shifted |= (2**256 - 1) << (256 - off)
                     stack.append(shifted)
             else:
                 # FIXME: This won't give the right result...
@@ -653,7 +674,12 @@ class VM(EasyCopy):
             stack.append(("var", vname))
 
         elif op == "calldataload":
-            stack.append(("cd", stack.pop(),))
+            stack.append(
+                (
+                    "cd",
+                    stack.pop(),
+                )
+            )
 
         elif op == "byte":
             val = stack.pop()
@@ -662,14 +688,29 @@ class VM(EasyCopy):
             stack.append(mask_op(val, 8, off, shr=off))
 
         elif op == "selfbalance":
-            stack.append(("balance", "address",))
+            stack.append(
+                (
+                    "balance",
+                    "address",
+                )
+            )
 
         elif op == "balance":
             addr = stack.pop()
             if opcode(addr) == "mask_shl" and addr[:4] == ("mask_shl", 160, 0, 0):
-                stack.append(("balance", addr[4],))
+                stack.append(
+                    (
+                        "balance",
+                        addr[4],
+                    )
+                )
             else:
-                stack.append(("balance", addr,))
+                stack.append(
+                    (
+                        "balance",
+                        addr,
+                    )
+                )
 
         elif op == "swap":
             stack.swap(param)
@@ -683,7 +724,13 @@ class VM(EasyCopy):
                 el = stack.pop()
                 topics.append(el)
 
-            trace(("log", mem_load(p, s),) + tuple(topics))
+            trace(
+                (
+                    "log",
+                    mem_load(p, s),
+                )
+                + tuple(topics)
+            )
 
         elif op == "sload":
             sloc = stack.pop()
@@ -705,13 +752,25 @@ class VM(EasyCopy):
         elif op == "mstore":
             memloc = stack.pop()
             val = stack.pop()
-            trace(("setmem", ("range", memloc, 32), val,))
+            trace(
+                (
+                    "setmem",
+                    ("range", memloc, 32),
+                    val,
+                )
+            )
 
         elif op == "mstore8":
             memloc = stack.pop()
             val = stack.pop()
 
-            trace(("setmem", ("range", memloc, 8), val,))
+            trace(
+                (
+                    "setmem",
+                    ("range", memloc, 8),
+                    val,
+                )
+            )
 
         elif op == "extcodecopy":
             addr = stack.pop()
@@ -753,7 +812,11 @@ class VM(EasyCopy):
                     (
                         "setmem",
                         ("range", mem_pos, data_len),
-                        ("code.data", call_pos, data_len,),
+                        (
+                            "code.data",
+                            call_pos,
+                            data_len,
+                        ),
                     )
                 )
 
@@ -902,7 +965,12 @@ class VM(EasyCopy):
             stack.append(("var", vname))
 
         elif op in ("extcodesize", "extcodehash", "blockhash"):
-            stack.append((op, stack.pop(),))
+            stack.append(
+                (
+                    op,
+                    stack.pop(),
+                )
+            )
 
         elif op in [
             "callvalue",
@@ -963,14 +1031,12 @@ class VM(EasyCopy):
         ret_len = stack.pop()
 
         if addr == 4:  # Identity
-
             m = mem_load(arg_start, arg_len)
             trace(("setmem", ("range", ret_start, arg_len), m))
 
             stack.append("memcopy.success")
 
         elif type(addr) == int and addr in precompiled:
-
             m = mem_load(arg_start, arg_len)
             args = mem_load(arg_start, arg_len)
             var_name = precompiled_var_names[addr]
@@ -993,7 +1059,6 @@ class VM(EasyCopy):
                 call_trace += None, None
 
             elif arg_len == 4:
-
                 call_trace += mem_load(arg_start, 4), None
 
             else:

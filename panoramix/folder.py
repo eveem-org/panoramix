@@ -43,58 +43,57 @@ logger = logging.getLogger(__name__)
 
 
 def fold(trace):
-
     """
-        as_paths unfolds the trace into a list of branchless paths that the contract can
-        possibly take. 'if's are converted into condition assertions, e.g.
+    as_paths unfolds the trace into a list of branchless paths that the contract can
+    possibly take. 'if's are converted into condition assertions, e.g.
 
-        [x,
-         y,
-         z,
-         (if, cond,
-                [a,
-                 b,
-                 c,
-                 ...,
-                 q,
-                 w,
-                 e]
-               ,
-                 [d,
-                  e,
-                  f,
-                  ...,
-                  q,
-                  w,
-                  e])]
-
-        gets turned into
-
-        [
-            [x,
-             y,
-             z,
-             cond,
-             a,
+    [x,
+     y,
+     z,
+     (if, cond,
+            [a,
              b,
              c,
              ...,
              q,
              w,
-             e],
-
-             [x,
-              y,
-              z,
-              is_zero(cond),
-              d,
+             e]
+           ,
+             [d,
               e,
               f,
               ...,
               q,
               w,
-              e]
-        ]
+              e])]
+
+    gets turned into
+
+    [
+        [x,
+         y,
+         z,
+         cond,
+         a,
+         b,
+         c,
+         ...,
+         q,
+         w,
+         e],
+
+         [x,
+          y,
+          z,
+          is_zero(cond),
+          d,
+          e,
+          f,
+          ...,
+          q,
+          w,
+          e]
+    ]
     """
 
     try:
@@ -429,7 +428,6 @@ def meta_fold_paths(paths):
 
 def flatten(path):
     def ends_exec(path):  # check if all the subpaths end execution
-
         # only checking the last line, previous ones may end execution as well
         # but at least one leading up to the last line didn't - otherwise
         # we wouldn't see it
@@ -461,7 +459,6 @@ def flatten(path):
     res = []
 
     for idx, line in enumerate(path):
-
         if opcode(line) != "or":
             res.append(line)
             continue
@@ -514,7 +511,6 @@ def cleanup_ors(path):
     idx = 0
     while idx < len(path):
         if type(path[idx]) == list:
-
             path = path[:idx] + path[idx] + path[idx + 1 :]
 
         line = path[idx]
@@ -568,7 +564,6 @@ def make_ifs(path):
 
 
 def try_merge_ifs(cond, if_true, if_false):
-
     idx = 0
     while idx < min(len(if_true), len(if_false)) and if_true[idx] == if_false[idx]:
         idx += 1
@@ -621,7 +616,6 @@ def merge_ifs(path):
 
 
 def fold_paths(for_merge):
-
     if len(for_merge) == 0:
         return []
 
@@ -694,7 +688,6 @@ def fold_paths(for_merge):
                 for idx1 in range(1, len(shortest)):
                     s1 = starting_with(line, shortest[:idx1])
                     for idx2 in range(1, len(longest)):
-
                         s2 = starting_with(line, longest[:idx2])
                         if (
                             best is None
