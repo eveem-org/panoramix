@@ -390,27 +390,28 @@ def find_storage_names(functions):
 
             # func name into potential storage name
 
-            new_name = func.name
+            name = func.name
 
-            if new_name[:3] == "get" and len(new_name.split("(")[0]) > 3:
-                new_name = new_name[3:]
+            if name[:3] == "get" and len(name.split("(")[0]) > 3:
+                name = name[3:]
 
-            if new_name != new_name.upper():
+            if name != name.upper():
                 # otherwise we get stuff like bILLIONS in 0xF0160428a8552AC9bB7E050D90eEADE4DDD52843
-                new_name = new_name[0].lower() + new_name[1:]
+                name = name[0].lower() + name[1:]
 
-            new_name = new_name.split("(")[0]
+            name = name.split("(")[0]
 
             if match(getter, ("storage", 160, ...)):
                 if (
-                    ("address" not in new_name.lower())
-                    and ("addr" not in new_name.lower())
-                    and ("account" not in new_name.lower())
-                    and ("owner" not in new_name.lower())
+                    ("address" not in name.lower())
+                    and ("addr" not in name.lower())
+                    and ("account" not in name.lower())
+                    and ("owner" not in name.lower())
                 ):
-                    new_name += "Address"
+                    name += "Address"
 
-            res[getter] = new_name
+            logger.debug("found storage in function %s: %s %s", func.name, getter, name)
+            res[getter] = name
 
     return res
 

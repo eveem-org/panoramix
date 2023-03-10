@@ -164,8 +164,7 @@ def to_while(trace, jd, path=None):
     while True:
         if trace == []:
             raise
-        line = trace[0]
-        trace = trace[1:]
+        line, *trace = trace
 
         if m := match(line, ("if", ":cond", ":if_true", ":if_false")):
             cond, if_true, if_false = m.cond, m.if_true, m.if_false

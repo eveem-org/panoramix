@@ -150,10 +150,8 @@ class Contract:
             ):
                 e_type, e_field, e_name, loc = m.e_type, m.e_field, m.e_name, m.loc
                 for mask in stor_name_to_masks[e_name]:
-                    assert (
-                        get_loc(mask) == loc
-                    )  # otherwise, two locs with the same name?
-
+                    if get_loc(mask) != loc:
+                        logger.error("Seems like we have two locations / storages with the same name: %s %s %s", mask, loc, get_loc(mask))
                     assert (
                         m := match(
                             mask, ("type", ":m_type", ("field", ":m_field", Any))
