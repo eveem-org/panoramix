@@ -73,6 +73,7 @@ opcode_dict = {
     0x45: "gaslimit",
     0x46: "chainid",
     0x47: "selfbalance",
+    0x48: "basefee",
     #
     # Stack, Memory, Storage and Flow Operations
     #
@@ -227,6 +228,7 @@ stack_diffs = {
     "origin": 1,
     "address": 1,
     "selfbalance": 1,
+    "basefee": 1,
     "chainid": 1,
     "call": -6,
     "callcode": -6,

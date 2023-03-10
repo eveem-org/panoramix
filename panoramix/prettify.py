@@ -978,6 +978,9 @@ def prettify(exp, rem_bool=False, parentheses=True, top_level=False, add_color=F
     if exp == "difficulty":
         return "block.difficulty"
 
+    if exp == "basefee":
+        return "block.basefee"
+
     if exp == "gasprice":
         return "block.gasprice"
 

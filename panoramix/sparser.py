@@ -457,7 +457,7 @@ def stor_replace_f(storages, f):
 
 def _sparser(orig_storages):
     storages = []
-    for idx, s in enumerate(orig_storages):
+    for s in orig_storages:
         storages.append(("stor",) + s[1:])
 
     def simplify_sha3(e):

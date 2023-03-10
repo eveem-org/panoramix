@@ -987,6 +987,7 @@ class VM(EasyCopy):
             "gaslimit",
             "calldatasize",
             "returndatasize",
+            "basefee",
         ]:
             stack.append(op)
 
