@@ -160,7 +160,7 @@ def match_score(func, hashes):
 def make_abi(hash_targets):
     global _abi
 
-    hash_name = str(sorted(list(hash_targets.keys()))).encode("utf-8")
+    hash_name = str(sorted(list(hash_targets.keys()))).encode()
     hash_name = hashlib.sha256(hash_name).hexdigest()
 
     dir_name = (
@@ -184,27 +184,23 @@ def make_abi(hash_targets):
     result = {}
 
     for h, target in hash_targets.items():
-
         res = {
             "fname": "unknown" + h[2:] + "()",
             "folded_name": "unknown" + h[2:] + "(?)",
         }
 
         if "0x" not in h:  # assuming index is a name - e.g. for _fallback()
-
             res["fname"] = h
             res["folded_name"] = h
 
         else:
-
             sigs = fetch_sigs(h)
-
             if len(sigs) > 0:
                 best_score = 0
-
                 for f in sigs:
                     score = match_score(f, hashes)
                     if score > best_score:
+                        best_score = score
                         res = {
                             "name": f["name"],
                             "folded_name": f["folded_name"],
