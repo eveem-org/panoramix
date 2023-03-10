@@ -146,7 +146,7 @@ class Stack(EasyCopy):
     def _simplify(exp):
         op = opcode(exp)
 
-        if op in arithmetic.opcodes:
+        if op in arithmetic.OPCODES:
             exp = arithmetic.eval(exp)
 
         if op in ("and", "div", "mul"):

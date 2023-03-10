@@ -408,24 +408,6 @@ def sar(shift_length, value):
         return (value >> shift_length) & UINT_256_MAX
 
 
-opcodes = {
-    "add": add,
-    "addmod": addmod,
-    "sub": sub,
-    "mod": mod,
-    "smod": smod,
-    "mul": mul,
-    "mulmod": mulmod,
-    "div": div,
-    "sdiv": sdiv,
-    "exp": exp,
-    "signextend": signextend,
-    "shl": shl,
-    "shr": shr,
-    "sar": sar,
-}
-
-
 def or_op(left, right=0):
     return left | right
 
@@ -461,7 +443,7 @@ def sle(left, right):
 
 
 def sge(left, right):
-    return sge(left, right) | eq(left, right)
+    return sgt(left, right) | eq(left, right)
 
 
 def slt(left, right):
@@ -487,35 +469,49 @@ def eval(exp):
         return exp
 
     for i, p in enumerate(exp[1:]):
-        if opcode(p) in opcodes:
+        if opcode(p) in OPCODES:
             exp = exp[: i + 1] + (eval(p),) + exp[i + 2 :]
 
     for p in exp[1:]:
         if type(p) != int:
             return exp
 
-    if exp[0] in opcodes:
-        return opcodes[exp[0]](*exp[1:])
+    if exp[0] in OPCODES:
+        return OPCODES[exp[0]](*exp[1:])
 
     return exp
 
 
-opcodes.update(
-    {
-        "and": and_op,
-        "or": or_op,
-        "xor": xor,
-        "not": not_op,
-        "byte": byte_op,
-        "eq": eq,
-        "lt": lt,
-        "le": le,
-        "gt": gt,
-        "sgt": sgt,
-        "slt": slt,
-        "ge": ge,
-        "gt": gt,
-        "sge": sge,
-        "sle": sle,
-    }
-)
+OPCODES = {
+    "add": add,
+    "addmod": addmod,
+    "sub": sub,
+    "mod": mod,
+    "smod": smod,
+    "mul": mul,
+    "mulmod": mulmod,
+    "div": div,
+    "sdiv": sdiv,
+    "exp": exp,
+    "signextend": signextend,
+    "shl": shl,
+    "shr": shr,
+    "sar": sar,
+    "and": and_op,
+    "or": or_op,
+    "xor": xor,
+    "not": not_op,
+    "byte": byte_op,
+    "eq": eq,
+    "lt": lt,
+    "le": le,
+    "gt": gt,
+    "sgt": sgt,
+    "slt": slt,
+    "ge": ge,
+    "gt": gt,
+    "sge": sge,
+    "sle": sle,
+}
+
+

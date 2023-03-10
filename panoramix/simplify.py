@@ -543,7 +543,7 @@ def simplify_exp(exp):
 def simplify_mask(exp):
     op = opcode(exp)
 
-    if op in arithmetic.opcodes:
+    if op in arithmetic.OPCODES:
         exp = arithmetic.eval(exp)
 
     if m := match(exp, ("and", ":left", ":right")):
