@@ -383,7 +383,7 @@ def rewrite_memcpy(lines):  # 2
     ):
         return (
             "setmem",
-            ("range", s, ("cd", ("add", 4, m.param))),
+            ("range", m.s, ("cd", ("add", 4, m.param))),
             ("call.data", ("add", 36, m.param), ("cd", ("add", 4, m.param))),
         )
 

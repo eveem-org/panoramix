@@ -520,7 +520,7 @@ def cleanup_ors(path):
 
         elif len(line) == 2:  # one-sided or
             # clean up the inside, skip the next line in the main path
-            condition = line[1][0]
+            # condition = line[1][0]
             line = ("or", cleanup_ors(line[1]))
             ret.append(line)
             idx += 1

@@ -299,10 +299,6 @@ def rewrite_trace_ifs(trace, f):
     return res
 
 
-def print_cached():
-    print(repr(cached_dict))
-
-
 class EasyCopy:
     def __init__(self):
         self.value = None

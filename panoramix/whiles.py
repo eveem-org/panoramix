@@ -1,7 +1,5 @@
 import collections
 import logging
-import sys
-from copy import copy
 
 from panoramix.core import arithmetic
 from panoramix.core.algebra import (
