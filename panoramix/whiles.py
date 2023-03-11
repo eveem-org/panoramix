@@ -86,7 +86,7 @@ logger.level = logging.CRITICAL  # switch to INFO for detailed
 """
 
 
-def make_whiles(trace):
+def make_whiles(trace, timeout=0):
     trace = make(trace)
     explain("Loops -> whiles", trace)
 
@@ -94,7 +94,7 @@ def make_whiles(trace):
     trace = rewrite_trace(
         trace, lambda line: [] if opcode(line) == "jumpdest" else [line]
     )
-    trace = simplify_trace(trace)
+    trace = simplify_trace(trace, timeout=timeout)
 
     return trace
 
@@ -118,7 +118,7 @@ def make(trace):
             try:
                 before, inside, remaining, cond = to_while(trace[idx + 1 :], jd)
             except Exception:
-                continue
+                logger.debug("Exception in to_while.", exc_info=True)
 
             inside = inside  # + [str(inside)]
 

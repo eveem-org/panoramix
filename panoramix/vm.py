@@ -70,7 +70,7 @@ def find_nodes(node, f):
     return res
 
 
-MAX_NODE_COUNT = 10_000
+MAX_NODE_COUNT = 5_000
 node_count = 0
 
 
@@ -265,7 +265,7 @@ class VM(EasyCopy):
 
         if should_quit():
             logger.warning(
-                "VM stopped prematurely. Node count %i and seconds %i.",
+                "VM stopped prematurely. Node count %i, after %.2f seconds.",
                 node_count,
                 time.monotonic() - time_start,
             )

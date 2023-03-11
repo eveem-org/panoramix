@@ -136,18 +136,6 @@ def opcode(exp):
         return exp[0]
 
 
-def before_after(func):
-    def wrapper(*args):
-        res = func(*args)
-
-        print("in", args)
-        print(func.__name__)
-        print("out", res)
-        return res
-
-    return wrapper
-
-
 def cached(func):
     cache = {}
 
@@ -156,6 +144,7 @@ def cached(func):
         try:
             return cache[key]
         except TypeError:  # If it contains lists.
+            logger.debug("Trying to cache with non-hashable arguments. Key: %s", key)
             return func(*args, **kwargs)
         except KeyError:
             pass

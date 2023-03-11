@@ -165,7 +165,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
                     )
                     explain("Without assembly", trace)
 
-                trace = make_whiles(trace)
+                trace = make_whiles(trace, timeout=60)
                 explain("final", trace)
 
                 if "--explain" in sys.argv:
@@ -174,16 +174,10 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
                 return trace
 
             trace = dec()
-
             functions[hash] = Function(hash, trace)
-
         except (Exception, TimeoutInterrupt):
             problems[hash] = fname
-
             logger.exception("Problem with %s%s", fname, C.end)
-
-            if "--strict" in sys.argv:
-                raise
 
     logger.info("Functions decompilation finished, now doing post-processing.")
 

@@ -21,7 +21,6 @@ def type_to_mask(s):
         "int128": 128,
         "uint128": 128,
         "bytes16": 128,
-        "addr": 160,
         "address": 160,
         "uint256": 256,
         "bytes32": 256,
@@ -48,7 +47,7 @@ def mask_to_type(num, force=False):
         32: "uint32",
         64: "uint64",
         128: "uint128",
-        160: "addr",
+        160: "address",
         256: "uint256",
     }
 

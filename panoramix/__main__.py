@@ -59,8 +59,10 @@ def main():
             print_decompilation(addr, args)
     elif args.profile:
         with cProfile.Profile() as profile:
-            print_decompilation(args.address_or_bytecode, args)
-        profile.dump_stats("panoramix.prof")
+            try:
+                print_decompilation(args.address_or_bytecode, args)
+            finally:
+                profile.dump_stats("panoramix.prof")
 
     else:
         print_decompilation(args.address_or_bytecode, args)

@@ -3,7 +3,6 @@ import sys
 
 from panoramix.matcher import Any, match
 from panoramix.utils.helpers import (
-    before_after,
     cached,
     contains,
     is_array,
@@ -632,39 +631,7 @@ def replace_max_with_MAX(exp):
     return exp, res
 
 
-strict = "--strict" in sys.argv
-
-
-# @cached
-def fill_mem(exp, mem_idx, mem_val):
-    # speed - if exp contains a variable used in mem_idx
-    #         or mem_idx contains a variable not used in exp
-    #         there can be no match.
-    #
-    #         ugly, but shaves off 15% exec time
-    logger.debug(f"filling mem: {exp} with mem[{mem_idx}] == {mem_val}")
-
-    if (m := match(mem_idx, ("range", ("var", ":num"), Any))) and not contains(
-        exp, ("var", m.num)
-    ):
-        assert not strict
-        return exp
-
-    if (m := match(exp, ("mem", ("range", ("var", ":num"), Any)))) and not contains(
-        mem_idx, ("var", m.num)
-    ):
-        assert not strict
-        return exp
-
-    logger.debug("no speed improvements")
-
-    # /speed
-
-    f = _fill_mem(exp, mem_idx, mem_val)
-    return f
-
-
-def _fill_mem(exp, split, split_val):
+def fill_mem(exp, split, split_val):
     if exp == ("mem", split):
         return split_val
 
@@ -780,10 +747,7 @@ def range_overlaps(range1, range2):
             r1_begin, r1_end, r2_begin, r2_end = r2_begin, r2_end, r1_begin, r1_end
 
         # r1 begins before r2 for sure now
-        if le_op(r1_end, r2_begin) is True:
-            return False
-        else:
-            return True
+        return le_op(r1_end, r2_begin) is not True
 
     except CannotCompare:
         return None

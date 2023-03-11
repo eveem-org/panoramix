@@ -1,4 +1,5 @@
 import collections
+import time
 import logging
 import sys
 from copy import copy
@@ -81,7 +82,6 @@ from panoramix.postprocess import cleanup_mul_1
 from panoramix.rewriter import postprocess_exp, postprocess_trace, rewrite_string_stores
 
 logger = logging.getLogger(__name__)
-logger.level = logging.CRITICAL  # switch to INFO for detailed
 
 
 """
@@ -132,10 +132,18 @@ logger.level = logging.CRITICAL  # switch to INFO for detailed
 """
 
 
-def simplify_trace(trace):
+def simplify_trace(trace, timeout=0):
+    time_start = time.monotonic()
+
+    def should_quit():
+        q = timeout and (time.monotonic() - time_start > timeout)
+        if q:
+            logger.warning("simplify_trace timed out.")
+        return q
+
     old_trace = None
     count = 0
-    while trace != old_trace and count < 40:
+    while trace != old_trace and count < 40 and not should_quit():
         count += 1
 
         old_trace = trace
@@ -198,9 +206,9 @@ def simplify_trace(trace):
     trace = rewrite_trace_multiline(trace, rewrite_string_stores, 3)
     explain("using heuristics to clean up some things", trace)
 
-    trace = cleanup_mems(trace)
-    trace = cleanup_mems(trace)
-    trace = cleanup_mems(trace)
+    for _ in range(3):
+        trace = cleanup_mems(trace)
+
     trace = cleanup_conds(trace)
     explain("final setmem/condition cleanup", trace)
 
@@ -1489,14 +1497,12 @@ def trace_uses_mem(trace, mem_idx):
     return False
 
 
-def cleanup_mems(trace, in_loop=False):
+def cleanup_mems(trace):
     """
     for every setmem, replace future occurences of it with it's value,
     if possible
 
     """
-
-    # pprint_trace(trace)
 
     res = []
 
@@ -1516,12 +1522,15 @@ def cleanup_mems(trace, in_loop=False):
             mem_idx, mem_val = m.mem_idx, m.mem_val
 
             # find all the future occurences of var and replace if possible
-            if not affects(line, mem_val):
-                remaining_trace = replace_mem(trace[idx + 1 :], mem_idx, mem_val)
-            else:
+            if affects(line, mem_val):
                 remaining_trace = trace[idx + 1 :]
+            else:
+                # The following line is the cause for O(N^2) complexity,
+                # as here we iterate over the trace, and below we call `replace_mem`
+                # over everything that's left in the trace.
+                remaining_trace = replace_mem(trace[idx + 1 :], mem_idx, mem_val)
 
-            if in_loop or trace_uses_mem(remaining_trace, mem_idx):
+            if trace_uses_mem(remaining_trace, mem_idx):
                 res.append(line)
 
             res.extend(cleanup_mems(remaining_trace))
@@ -1565,7 +1574,6 @@ def replace_mem_exp(exp, mem_idx, mem_val):
         if m := match(
             res, ("delegatecall", ":gas", ":addr", ("mem", ":func"), ("mem", ":args"))
         ):
-            gas, addr = m.gas, m.addr
             op, f_begin, f_len = m.func
             assert op == "range"
             op, a_begin, a_len = m.args
@@ -1575,12 +1583,11 @@ def replace_mem_exp(exp, mem_idx, mem_val):
                 # let's merge those two memories, and try to replace with mem exp
                 res_range = simplify_exp(("range", f_begin, add_op(f_len, a_len)))
                 if res_range == mem_idx:
-                    res = ("delegatecall", gas, addr, None, mem_val)
+                    res = ("delegatecall", m.gas, m.addr, None, mem_val)
 
         if m := match(
             res, ("call", ":gas", ":addr", ":value", ("mem", ":func"), ("mem", ":args"))
         ):
-            gas, addr, value = m.gas, m.addr, m.value
             op, f_begin, f_len = m.func
             assert op == "range"
             op, a_begin, a_len = m.args
@@ -1590,7 +1597,7 @@ def replace_mem_exp(exp, mem_idx, mem_val):
                 # let's merge those two memories, and try to replace with mem exp
                 res_range = simplify_exp(("range", f_begin, add_op(f_len, a_len)))
                 if res_range == mem_idx:
-                    res = ("call", gas, addr, value, None, mem_val)
+                    res = ("call", m.gas, m.addr, m.value, None, mem_val)
 
     if res != exp:
         res = simplify_exp(res)
@@ -1662,10 +1669,7 @@ def replace_mem(trace, mem_idx, mem_val):
             # shouldn't this go above the affects if above? and also update vars even if
             # the loops affects the memidx?
 
-            xx = []
-            for v in vars:
-                xx.append(replace_mem_exp(v, mem_idx, mem_val))
-            vars = xx
+            vars = [replace_mem_exp(v, mem_idx, mem_val) for v in vars]
 
             if not affects(line, ("mem", mem_idx)) and not affects(line, (mem_val)):
                 cond = replace_mem_exp(cond, mem_idx, mem_val)

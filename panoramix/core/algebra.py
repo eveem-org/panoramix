@@ -16,10 +16,13 @@
 
 
 import numbers
+import logging
 
 from panoramix.core.variants import variants
 from panoramix.matcher import Any, match
 from panoramix.utils.helpers import EasyCopy, all_concrete, cached, opcode, to_exp2
+
+logger = logging.getLogger(__name__)
 
 
 class CannotCompare(Exception):
@@ -441,7 +444,7 @@ def to_bytes(exp):
                 if bi == 0:
                     res.append(by)
                 else:
-                    raise NotImplementedError()
+                    raise NotImplementedError(exp)
 
             elif opcode(e) == "mul" and len(e) == 3:
                 if e[1] % 8 == 0:
@@ -449,10 +452,10 @@ def to_bytes(exp):
                 elif opcode(e[2]) == "mask_shl" and e[2][:4] == ("mask_shl", 253, 0, 3):
                     res.append(("mul", e[1], e[2][4]))
                 else:
-                    raise NotImplementedError()
+                    raise NotImplementedError(exp)
 
             else:
-                raise NotImplementedError()
+                raise NotImplementedError(exp)
 
         return ("add",) + tuple(res), 0
 
