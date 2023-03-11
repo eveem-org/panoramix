@@ -42,3 +42,13 @@ Here is an example for cryptokitties: https://oko.palkeo.com/0x06012c8cf97BEaD5d
 ## Caveats
 
 Windows is not supported currently.
+
+## Changelog
+
+### 0.5.0
+
+ * Added support for the BASEFEE opcode.
+ * Updated bytecode database / ABI definitions.
+ * Ability to decompile the Solidity-generated Panic reverts.
+ * Lots of simplification / code cleanup.
+ * Moved to Poetry as the dependency management tool.

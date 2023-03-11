@@ -147,7 +147,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
             # skip all the functions that are not it
             continue
 
-        logger.info("Parsing %s...", fname)
+        logger.info("Decompiling %s...", fname)
         logger.debug("stack %s", stack)
 
         try:

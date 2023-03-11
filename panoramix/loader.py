@@ -14,7 +14,6 @@ from panoramix.utils.helpers import (
     find_f_list,
     padded_hex,
     pretty_bignum,
-    cache_dir,
 )
 from panoramix.utils.opcode_dict import opcode_dict
 from panoramix.utils.signatures import get_func_name, make_abi
@@ -56,18 +55,16 @@ class Loader(EasyCopy):
             return None
 
         # duplicate of get_func_name from signatures
-        if "params" in a:
-            res = "{}({})".format(
-                a["name"],
-                ", ".join(
-                    [
-                        colorize(x["type"], COLOR_GRAY, add_color) + " " + x["name"][1:]
-                        for x in a["params"]
-                    ]
-                ),
-            )
-        else:
-            res = a["folded_name"]
+        assert "inputs" in a
+        res = "{}({})".format(
+            a["name"],
+            ", ".join(
+                [
+                    colorize(x["type"], COLOR_GRAY, add_color) + " " + x["name"][1:]
+                    for x in a["inputs"]
+                ]
+            ),
+        )
 
         cache_sigs[add_color][sig] = res
         return res
@@ -85,25 +82,11 @@ class Loader(EasyCopy):
         assert address.isalnum()
         address = address.lower()
 
-        dir_ = cache_dir() / "code" / address[:5]
-        if not dir_.is_dir():
-            dir_.mkdir(parents=True)
+        logger.info("Fetching code for %s...", address)
+        from web3 import Web3
+        from web3.auto import w3
 
-        cache_fname = dir_ / f"{address}.bin"
-
-        if cache_fname.is_file():
-            logger.info("Code for %s found in cache...", address)
-            with cache_fname.open() as source_file:
-                code = source_file.read().strip()
-        else:
-            logger.info("Fetching code for %s...", address)
-            from web3 import Web3
-            from web3.auto import w3
-
-            code = w3.eth.get_code(Web3.to_checksum_address(address)).hex()[2:]
-            if code:
-                with cache_fname.open("w+") as f:
-                    f.write(code)
+        code = w3.eth.get_code(Web3.to_checksum_address(address)).hex()[2:]
 
         self.load_binary(code)
 
@@ -145,11 +128,11 @@ class Loader(EasyCopy):
                             return int(m2.jd)
 
             default = find_f(trace, find_default) if func_list else None
-            self.add_func(default or 0, name="_fallback()")
+            self.add_func(default or 0, name="_fallback")
 
         except Exception:
             logger.exception("Loader issue.")
-            self.add_func(0, name="_fallback()")
+            self.add_func(0, name="_fallback")
 
         make_abi(self.hash_targets)
         for hash, (target, stack) in self.hash_targets.items():
@@ -175,7 +158,7 @@ class Loader(EasyCopy):
             if padded in self.signatures:
                 name = self.signatures[padded]
             else:
-                name = "unknown_{}(?????)".format(padded)
+                name = "unknown_{}".format(padded)
                 self.signatures[padded] = name
 
         if hash is None:
@@ -222,7 +205,7 @@ class Loader(EasyCopy):
                 if op == "jumpdest":
                     self.jump_dests.append(line)
 
-                if op[:4] == "push":
+                if op.startswith("push"):
                     num_words = int(op[4:])
 
                     param = 0
@@ -241,7 +224,7 @@ class Loader(EasyCopy):
         self.lines = {}
 
         for line_no, op, param in parsed_lines:
-            if op[:4] == "push" and param > 1000000000000000:
+            if op.startswith("push") and param > 1000000000000000:
                 param = pretty_bignum(
                     param
                 )  # convert big numbers into strings if possibble
