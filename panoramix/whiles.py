@@ -77,7 +77,6 @@ from panoramix.utils.helpers import (
 from panoramix.postprocess import cleanup_mul_1
 
 logger = logging.getLogger(__name__)
-logger.level = logging.CRITICAL  # switch to INFO for detailed
 
 """
 
@@ -118,9 +117,8 @@ def make(trace):
             try:
                 before, inside, remaining, cond = to_while(trace[idx + 1 :], jd)
             except Exception:
-                logger.debug("Exception in to_while.", exc_info=True)
-
-            inside = inside  # + [str(inside)]
+                res.append(line)
+                continue
 
             inside = make(inside)
             remaining = make(remaining)
@@ -162,17 +160,15 @@ def to_while(trace, jd, path=None):
     path = path or []
 
     while True:
-        if trace == []:
-            raise
         line, *trace = trace
 
         if m := match(line, ("if", ":cond", ":if_true", ":if_false")):
             cond, if_true, if_false = m.cond, m.if_true, m.if_false
+
             if is_revert(if_true):
                 path.append(("require", is_zero(cond)))
                 trace = if_false
                 continue
-
             if is_revert(if_false):
                 path.append(("require", cond))
                 trace = if_true
@@ -181,7 +177,7 @@ def to_while(trace, jd, path=None):
             jds_true = find_f_list(if_true, get_jds)
             jds_false = find_f_list(if_false, get_jds)
 
-            assert (jd in jds_true) != (jd in jds_false), (jds_true, jds_false)
+            assert (jd in jds_true) != (jd in jds_false), (jd, jds_true, jds_false)
 
             def add_path(line):
                 if m := match(line, ("goto", Any, ":svs")):

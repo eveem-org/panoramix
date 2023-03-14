@@ -161,7 +161,7 @@ def sub_op(left, right):
 def flatten_adds(exp):
     res = exp
 
-    while len([a for a in res if opcode(a) == "add"]) > 0:
+    while any(opcode(a) == "add" for a in res):
         exp = []
         for r in res:
             if opcode(r) == "add":
@@ -269,7 +269,7 @@ def add_op(*args):
     for r in res:
         assert opcode(r) != "add"
 
-        if type(r) in [int, float]:
+        if type(r) in (int, float):
             real += r
             continue
 

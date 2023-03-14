@@ -156,6 +156,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
 
             @timeout_decorator.timeout(60 * 3, timeout_exception=TimeoutInterrupt)
             def dec():
+                logger.info(" -> Interpreting EVM on function...")
                 trace = VM(loader).run(target, stack=stack, timeout=60)
                 explain("Initial decompiled trace", trace[1:])
 
@@ -165,6 +166,7 @@ def _decompile_with_loader(loader, only_func_name=None) -> Decompilation:
                     )
                     explain("Without assembly", trace)
 
+                logger.info(" -> Cleaning up AST, identifying loops...")
                 trace = make_whiles(trace, timeout=60)
                 explain("final", trace)
 

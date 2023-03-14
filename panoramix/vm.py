@@ -697,7 +697,7 @@ class VM(EasyCopy):
 
         elif op == "balance":
             addr = stack.pop()
-            if opcode(addr) == "mask_shl" and addr[:4] == ("mask_shl", 160, 0, 0):
+            if addr[:4] == ("mask_shl", 160, 0, 0):
                 stack.append(
                     (
                         "balance",
