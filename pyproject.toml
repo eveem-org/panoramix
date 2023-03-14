@@ -1,5 +1,8 @@
 [tool.poetry]
-name = "panoramix"
+name = "panoramix-decompiler"
+packages = [
+    { include="panoramix", from="." },
+]
 version = "0.5.0"
 description = "A python decompiler for the EVM."
 authors = ["palkeo <panoramix@palkeo.com>"]
