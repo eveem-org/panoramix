@@ -41,18 +41,18 @@ from panoramix.utils.helpers import (
 
 logger = logging.getLogger(__name__)
 
+
 def abi_path():
     return cache_dir() / "abi_db.shelve"
 
+
 def check_supplements():
     if not abi_path().is_file():
-        compressed_supplements = (
-            Path(__file__).parent.parent / "data" / "abi_dump.xz"
-        )
-        logger.info(
-            "Loading %s into %s...", compressed_supplements, abi_path()
-        )
-        with lzma.open(compressed_supplements) as inf, shelve.open(str(abi_path())) as out:
+        compressed_supplements = Path(__file__).parent.parent / "data" / "abi_dump.xz"
+        logger.info("Loading %s into %s...", compressed_supplements, abi_path())
+        with lzma.open(compressed_supplements) as inf, shelve.open(
+            str(abi_path())
+        ) as out:
             for line in inf:
                 line = json.loads(line)
                 selector, abi = line["selector"], line["abi"]
@@ -61,6 +61,7 @@ def check_supplements():
         assert abi_path().is_file()
 
         logger.info("%s is ready.", abi_path())
+
 
 @cached
 def fetch_sig(hash) -> Optional[dict]:

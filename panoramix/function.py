@@ -67,7 +67,8 @@ class Function(EasyCopy):
         self.trace = deepcopy(trace)
         self.orig_trace = deepcopy(self.trace)
 
-        self.params = self.make_params()
+        # A list of (kind, name)
+        self.inferred_params = self.make_params()
 
         if "unknown" in self.name:
             self.make_names()
@@ -85,13 +86,16 @@ class Function(EasyCopy):
         def rem_masks(exp):
             if m := match(exp, ("bool", ("cd", ":int:idx"))):
                 idx = m.idx
-                if idx in self.params and self.params[idx][0] == "bool":
+                if (
+                    idx in self.inferred_params
+                    and self.inferred_params[idx][0] == "bool"
+                ):
                     return ("cd", idx)
 
             elif m := match(exp, ("mask_shl", ":size", 0, 0, ("cd", ":int:idx"))):
                 size, idx = m.size, m.idx
-                if idx in self.params:
-                    kind = self.params[idx][0]
+                if idx in self.inferred_params:
+                    kind = self.inferred_params[idx][0]
                     def_size = type_to_mask(kind)
                     if size == def_size:
                         return ("cd", idx)
@@ -104,17 +108,19 @@ class Function(EasyCopy):
         new_name = self.name.split("(")[0]
 
         self.name = "{}({})".format(
-            new_name, ", ".join((p[0] + " " + p[1]) for p in self.params.values())
+            new_name,
+            ", ".join((p[0] + " " + p[1]) for p in self.inferred_params.values()),
         )
         self.color_name = "{}({})".format(
             new_name,
             ", ".join(
-                (p[0] + " " + COLOR_GREEN + p[1] + ENDC) for p in self.params.values()
+                (p[0] + " " + COLOR_GREEN + p[1] + ENDC)
+                for p in self.inferred_params.values()
             ),
         )
 
         self.abi_name = "{}({})".format(
-            new_name, ",".join(p[0] for p in self.params.values())
+            new_name, ",".join(p[0] for p in self.inferred_params.values())
         )
 
     def ast_length(self):
@@ -250,7 +256,7 @@ class Function(EasyCopy):
             "payable": self.payable,
             "print": self.print(),
             "trace": trace,
-            "params": self.params,
+            "params": self.inferred_params,
         }
         try:
             assert json.dumps(res)  # check if serialisation works well
@@ -266,7 +272,7 @@ class Function(EasyCopy):
 
     def _print(self):
         set_func(self.hash)
-        set_func_params_if_none(self.params)
+        set_func_params_if_none(self.inferred_params)
 
         if self.const is not None:
             val = self.const

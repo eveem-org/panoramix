@@ -4,6 +4,7 @@ import logging
 import os
 import os.path
 import sys
+from typing import Optional, List
 
 from panoramix.matcher import Any, match
 
@@ -32,6 +33,7 @@ _func = None
 
 
 def set_func_params_if_none(params):
+    logger.debug("set_func_params_if_none %s - %s", params, _func)
     if "inputs" not in _func:
         res = []
         for t, n in params.values():
@@ -102,31 +104,41 @@ def get_abi_name(hash):
     return "{}({})".format(a["name"], ",".join([x["type"] for x in a["inputs"]]))
 
 
-def get_func_params(hash):
+def get_func_params(hash) -> Optional[List]:
     a = _abi[hash]
-    assert "inputs" in a, a
-    return a["inputs"]
+    logger.debug("get_func_params for %s is %s", hash, a.get("inputs"))
+    return a.get("inputs")
 
 
 def get_func_name(hash, add_color=False):
     a = _abi[hash]
     logger.debug("get_func_name for abi %s", a)
-    assert "inputs" in a, a
-    return "{}({})".format(
-        a["name"],
-        ", ".join(
-            [
-                x["type"]
-                + " "
-                + colorize(
-                    x["name"].removesuffix("_"),
-                    COLOR_GREEN,
-                    add_color,
-                )
-                for x in a["inputs"]
-            ]
-        ),
-    )
+    if "inputs" in a:
+        return "{}({})".format(
+            a["name"],
+            ", ".join(
+                [
+                    x["type"]
+                    + " "
+                    + colorize(
+                        x["name"],
+                        COLOR_GREEN,
+                        add_color,
+                    )
+                    for x in a["inputs"]
+                ]
+            ),
+        )
+    else:
+        return "{}(?)".format(a["name"])
+
+
+def fix_input_names(inputs: List[dict]):
+    for i, input in enumerate(inputs):
+        if not input["name"]:
+            input["name"] = f"_param{i+1}"
+
+    return inputs
 
 
 def make_abi(hash_targets):
@@ -139,7 +151,6 @@ def make_abi(hash_targets):
     for h, target in hash_targets.items():
         res = {
             "name": "unknown" + h[2:],
-            "inputs": [],
         }
 
         if h.startswith("0x"):
@@ -147,12 +158,11 @@ def make_abi(hash_targets):
             if sig:
                 res = {
                     "name": sig["name"],
-                    "inputs": sig["inputs"],
+                    "inputs": fix_input_names(sig["inputs"]),
                 }
         else:  # assuming index is a name - e.g. for _fallback()
             res = {
                 "name": h,
-                "inputs": [],
             }
 
         res["target"] = target

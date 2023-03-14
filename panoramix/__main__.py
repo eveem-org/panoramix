@@ -9,6 +9,7 @@ from panoramix.decompiler import decompile_address, decompile_bytecode
 
 logger = logging.getLogger(__name__)
 
+
 def parse_args(args):
     parser = argparse.ArgumentParser(description="EVM decompiler.")
     parser.add_argument(
@@ -24,8 +25,16 @@ def parse_args(args):
         help="Enable profiling of the application. "
         "Dumps the profile data to a 'panoramix.prof' file.",
     )
-    parser.add_argument("address_or_bytecode", help="An ethereum address, a comma-separated list of ethereum addresses, or `-` to read bytecode from stdin.")
-    parser.add_argument("--function", default="", help="Function name to decompile only this one.", required=False)
+    parser.add_argument(
+        "address_or_bytecode",
+        help="An ethereum address, a comma-separated list of ethereum addresses, or `-` to read bytecode from stdin.",
+    )
+    parser.add_argument(
+        "--function",
+        default="",
+        help="Function name to decompile only this one.",
+        required=False,
+    )
 
     return parser.parse_args(args)
 

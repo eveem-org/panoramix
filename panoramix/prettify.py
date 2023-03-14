@@ -60,16 +60,16 @@ from panoramix.utils.signatures import get_param_name
 logger = logging.getLogger(__name__)
 
 PANIC_CODES = {
-    0x00: 'Used for generic compiler inserted panics.',
-    0x01: 'If you call assert with an argument that evaluates to false.',
-    0x11: 'If an arithmetic operation results in underflow or overflow outside of an unchecked { ... } block.',
-    0x12: 'If you divide or modulo by zero (e.g. 5 / 0 or 23 % 0).',
-    0x21: 'If you convert a value that is too big or negative into an enum type.',
-    0x22: 'If you access a storage byte array that is incorrectly encoded.',
-    0x31: 'If you call .pop() on an empty array.',
-    0x32: 'If you access an array, bytesN or an array slice at an out-of-bounds or negative index (i.e. x[i] where i >= x.length or i < 0).',
-    0x41: 'If you allocate too much memory or create an array that is too large.',
-    0x51: 'If you call a zero-initialized variable of internal function type.',
+    0x00: "Used for generic compiler inserted panics.",
+    0x01: "If you call assert with an argument that evaluates to false.",
+    0x11: "If an arithmetic operation results in underflow or overflow outside of an unchecked { ... } block.",
+    0x12: "If you divide or modulo by zero (e.g. 5 / 0 or 23 % 0).",
+    0x21: "If you convert a value that is too big or negative into an enum type.",
+    0x22: "If you access a storage byte array that is incorrectly encoded.",
+    0x31: "If you call .pop() on an empty array.",
+    0x32: "If you access an array, bytesN or an array slice at an out-of-bounds or negative index (i.e. x[i] where i >= x.length or i < 0).",
+    0x41: "If you allocate too much memory or create an array that is too large.",
+    0x51: "If you call a zero-initialized variable of internal function type.",
 }
 
 prev_trace = None
@@ -706,8 +706,12 @@ def pretty_line(r, add_color=True):
         res_mem = pretty_memory(param, add_color=True)
         ret_val = ", ".join(res_mem)
 
-        if m := match(r, ('revert', ('data', "'NH{q'", ':int:panic_code'))):
-            explanation = (f' {COLOR_GRAY}# ' + PANIC_CODES[m.panic_code] + ENDC) if m.panic_code in PANIC_CODES else ''
+        if m := match(r, ("revert", ("data", "'NH{q'", ":int:panic_code"))):
+            explanation = (
+                (f" {COLOR_GRAY}# " + PANIC_CODES[m.panic_code] + ENDC)
+                if m.panic_code in PANIC_CODES
+                else ""
+            )
             yield f"{op} Panic({m.panic_code}) {explanation}"
         elif len(clean_color(ret_val)) < 120 or opcode(param) != "data":
             yield f"{op} {ret_val}"

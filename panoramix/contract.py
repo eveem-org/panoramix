@@ -89,8 +89,10 @@ class Contract:
         for func in self.functions:
 
             def replace_names(exp):
-                if (m := match(exp, ("cd", ":int:idx"))) and m.idx in func.params:
-                    return ("param", func.params[m.idx][1])
+                if (
+                    m := match(exp, ("cd", ":int:idx"))
+                ) and m.idx in func.inferred_params:
+                    return ("param", func.inferred_params[m.idx][1])
                 return exp
 
             func.trace = replace_f(func.trace, replace_names)
@@ -151,7 +153,12 @@ class Contract:
                 e_type, e_field, e_name, loc = m.e_type, m.e_field, m.e_name, m.loc
                 for mask in stor_name_to_masks[e_name]:
                     if get_loc(mask) != loc:
-                        logger.error("Seems like we have two locations / storages with the same name: %s %s %s", mask, loc, get_loc(mask))
+                        logger.error(
+                            "Seems like we have two locations / storages with the same name: %s %s %s",
+                            mask,
+                            loc,
+                            get_loc(mask),
+                        )
                     assert (
                         m := match(
                             mask, ("type", ":m_type", ("field", ":m_field", Any))
