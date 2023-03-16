@@ -100,8 +100,10 @@ def get_param_name(cd, add_color=False, func=None):
 
 def get_abi_name(hash):
     a = _abi[hash]
-    assert "inputs" in a, a
-    return "{}({})".format(a["name"], ",".join([x["type"] for x in a["inputs"]]))
+    if "inputs" in a:
+        return "{}({})".format(a["name"], ",".join([x["type"] for x in a["inputs"]]))
+    else:
+        return "{}(?)".format(a["name"])
 
 
 def get_func_params(hash) -> Optional[List]:

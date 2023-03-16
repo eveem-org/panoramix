@@ -600,7 +600,7 @@ def pretty_line(r, add_color=True):
             yield "       args {}".format(", ".join(fparams))
 
     elif m := match(r, ("label", ":name", ":setvars")):
-        yield COLOR_GREEN + f"loop {str(m.name)} setvars: {str(m.setvars)}" + ENDC
+        yield COLOR_GREEN + f"label {str(m.name)} setvars: {str(m.setvars)}" + ENDC
 
     elif opcode(r) == "goto":
         _, *rest = r

@@ -57,6 +57,7 @@ def mem_load(pos, size=32):
 
 
 def find_nodes(node, f):
+    """Recursively find nodes where f(node) returns true."""
     assert type(node) == Node
 
     if f(node):
@@ -109,11 +110,6 @@ class Node:
         if self.trace is None:
             return [("undefined", "decompilation didn't finish")]
 
-        begin_vars = []
-        if self.is_label():
-            for _, var_idx, var_val, _ in self.label.begin_vars:
-                begin_vars.append(("setvar", var_idx, var_val))
-
         if self.vm.just_fdests and self.trace != [("revert", 0)]:
             t = self.trace[0]
             if match(t, ("jump", ":target_node", ...)):
@@ -123,7 +119,12 @@ class Node:
         else:
             begin = []
 
-        begin += [("label", self, tuple(begin_vars))] if self.is_label() else []
+        if self.is_label():
+            begin_vars = []
+            for _, var_idx, var_val, _ in self.label.begin_vars:
+                begin_vars.append(("setvar", var_idx, var_val))
+
+            begin.append(("label", self, tuple(begin_vars)))
 
         last = self.trace[-1]
 
@@ -223,8 +224,8 @@ class VM(EasyCopy):
 
         """
 
-        for j in range(20):  # 20
-            for i in range(200):  # 300
+        for j in range(20):
+            for i in range(200):
                 """
 
                 Find all the jumps, and expand them until
@@ -257,7 +258,7 @@ class VM(EasyCopy):
 
             trace = self.continue_loops(root)
 
-            tr = root.make_trace()
+            # tr = root.make_trace()
             nodes = find_nodes(root, lambda n: n.trace is None)
 
             if len(nodes) == 0 or should_quit():
@@ -309,12 +310,9 @@ class VM(EasyCopy):
         )
 
         for node in loop_list:
-            assert node.trace is not None
-            assert len(node.trace) == 1
-            assert opcode(node.trace[0]) == "loop"
-
-            line = node.trace[0]
-            loop_dest, stack, new_stack, vars = line[1:]
+            (line,) = node.trace
+            op, loop_dest, stack, new_stack, vars = line
+            assert op == "loop"
 
             if loop_dest.is_label():
                 old_stack = loop_dest.stack
@@ -325,7 +323,7 @@ class VM(EasyCopy):
                     sv = ("setvar", var_idx, stack[stack_pos])
                     set_vars.append(sv)
 
-                if len(list(set_vars)) == 0:
+                if not set_vars:
                     folded, var_list = fold_stacks(
                         old_stack, stack, loop_dest.label.depth
                     )

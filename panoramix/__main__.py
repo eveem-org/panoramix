@@ -35,6 +35,8 @@ def parse_args(args):
         help="Function name to decompile only this one.",
         required=False,
     )
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--explain", action="store_true")
 
     return parser.parse_args(args)
 

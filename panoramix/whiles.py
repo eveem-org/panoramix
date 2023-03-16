@@ -117,7 +117,7 @@ def make(trace):
             try:
                 before, inside, remaining, cond = to_while(trace[idx + 1 :], jd)
             except Exception:
-                res.append(line)
+                logger.exception("couldn't make loop for line %s, omitting it.", line)
                 continue
 
             inside = make(inside)

@@ -124,10 +124,9 @@ class Function(EasyCopy):
         )
 
     def ast_length(self):
-        if self.trace is not None:
-            return len((self.print().split("\n"))), len(self.print())
-        else:
+        if self.trace is None:
             return 0, 0
+        return len((self.print().split("\n"))), len(self.print())
 
     def priority(self):
         # sorts functions in this order:
@@ -154,7 +153,7 @@ class Function(EasyCopy):
         """
 
         params = get_func_params(self.hash)
-        if len(params) > 0:
+        if params:
             res = {}
             idx = 4
             for p in params:
