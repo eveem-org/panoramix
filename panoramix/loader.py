@@ -60,7 +60,7 @@ class Loader(EasyCopy):
             a["name"],
             ", ".join(
                 [
-                    colorize(x["type"], COLOR_GRAY, add_color) + " " + x["name"][1:]
+                    colorize(x["type"], COLOR_GRAY, add_color) + " " + x["name"]
                     for x in a["inputs"]
                 ]
             ),

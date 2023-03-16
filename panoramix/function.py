@@ -295,7 +295,7 @@ class Function(EasyCopy):
             if not self.payable:
                 comment = "# not payable"
 
-            if self.name == "_fallback()":
+            if self.name == "_fallback(?)":
                 if self.payable:
                     comment = "# default function"
                 else:

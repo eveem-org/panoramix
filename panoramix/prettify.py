@@ -391,7 +391,6 @@ def pretty_line(r, add_color=True):
                 # breaks with more than one proper event
 
         res_events = tuple(pretty_fname(e, add_color=False, force=True) for e in events)
-        #        print(res_events)
         res_events = tuple((x[:10] if x[:2] == "0x" else x) for x in res_events)
         for e in res_events:
             if e.count("(") != 1:
@@ -431,10 +430,9 @@ def pretty_line(r, add_color=True):
                         ind = len(f"log   ")
                         first = p_list[0]
                         last = p_list[-1]
-                        pline = (
-                            lambda p: f"{p[0]} {p[1]}={pret(p[2], add_color=False, parentheses=False)}"
-                        )  # spaces around = not pep8 compliant
-                        # but without them it was less readable
+
+                        def pline(p):
+                            return f"{p[0]} {p[1]}={pret(p[2], add_color=False, parentheses=False)}"
 
                         yield col(f"log {fname}(", COLOR_GRAY)  #
                         yield col(f"      {pline(first)},", COLOR_GRAY)
@@ -1457,8 +1455,9 @@ def try_fname(exp, add_color=False):
 
 def pretty_fname(exp, add_color=False, force=False):
     if type(exp) == int:
-        if try_fname(exp) and "unknown_" not in try_fname(exp):
-            return try_fname(exp, add_color)
+        fname = try_fname(exp, add_color)
+        if fname and "unknown_" not in fname:
+            return fname
         else:
             return hex(exp)
 
