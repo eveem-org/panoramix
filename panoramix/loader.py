@@ -86,7 +86,8 @@ class Loader(EasyCopy):
         from web3 import Web3
         from web3.auto import w3
 
-        code = w3.eth.get_code(Web3.to_checksum_address(address)).hex()[2:]
+        code = w3.eth.get_code(Web3.to_checksum_address(address)).hex().removeprefix("0x")
+        logger.debug("Code: %s", code)
 
         self.load_binary(code)
 
