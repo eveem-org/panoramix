@@ -400,7 +400,7 @@ assert memloc_overwrite(("range", 64, "x"), ("range", 70, add_op("unknown", 100)
 def slice_exp(exp, left, right):
     size = sub_op(right, left)
 
-    logger.debug(f"slicing {exp}, offset {left} bytes, until {right} bytes")
+    logger.debug("slicing %s, offset %i bytes, until %i bytes", exp, left, right)
     # e.g. mem[32 len 10], 2, 4 == mem[34,2]
 
     if m := match(exp, ("mem", ("range", ":rleft", ":rlen"))):
@@ -416,12 +416,12 @@ def slice_exp(exp, left, right):
         else:
             return None
 
-    logger.debug(f"sizeof exp {sizeof(exp)}")
+    logger.debug("sizeof exp %i", sizeof(exp))
     off = sub_op(sizeof(exp), bits(right))
-    logger.debug(f"applying mask, size 8*{size}, offset {off}")
+    logger.debug("applying mask, size 8*%i, offset %i", size, off)
 
     m = mask_op(exp, size=bits(size), offset=off, shr=off)
-    logger.debug(f"result {m}")
+    logger.debug("result %s", m)
     return m
 
 
