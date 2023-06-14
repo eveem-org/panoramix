@@ -92,6 +92,7 @@ opcode_dict = {
     #
     # Push Operations
     #
+    0x5f: "push0",
     0x60: "push1",
     0x61: "push2",
     0x62: "push3",
