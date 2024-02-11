@@ -7,7 +7,9 @@ https://github.com/palkeo/panoramix
 
 ## Installation:
 
-```
+```python3.8 panoramix.py kitties paused --explain
+python3.8 panoramix.py kitties pause --explain
+python3.8 panoramix.py kitties tokenMetadata --explain
 git clone https://github.com/eveem-org/panoramix.git
 pip3 install -r requirements.txt
 ```
@@ -16,17 +18,18 @@ pip3 install -r requirements.txt
 
 You *need* **python3.8** to run Panoramix. Yes, there was no way around it.
 
-```
+```panoramix.py
 python3.8 panoramix.py address [func_name] [--verbose|--silent|--explain]
 ```
 
 e.g.
 
-```
+```python3.8 panoramix.py address [func_name] [--verbose|--silent|--explain]
 python3.8 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d
 ```
 or
-```
+```git clone https://github.com/eveem-org/panoramix.git
+pip3 install -r requirements.txt
 python3.8 panoramix.py kitties
 ```
 
@@ -35,7 +38,7 @@ Output goes to two places:
 - ***`cache_pan/`*** directory - .pan, .json, .asm files
 
 If you want to see how Panoramix works under the hood, try the `--explain` mode:
-
+https://github.com/eveem-org/panoramix.git
 ```
 python3.8 panoramix.py kitties paused --explain
 python3.8 panoramix.py kitties pause --explain
