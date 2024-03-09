@@ -434,7 +434,7 @@ if len(sys.argv) == 1:
         f"""
     python3 panoramix.py [address|shortcut|stdin] [func_name] [--verbose] [--silent]
 
-        address: {C.gray}e.g. 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d
+        address: {C.gray}e.g. 0x49345182D578B1b3c7Ed4B2e6eCD8Aef63DD2CA3
                  you can provide multiple, separating with comma{C.end}
 
         shortcut: {C.gray}e.g. kitties, unicorn, solidstamp{C.end}
