@@ -63,7 +63,7 @@ addr_shortcuts = {
     # main contract for testing - most of the common edge cases here
     "mixgenes": "0xf97e0A5b616dfFC913e72455Fde9eA8bBe946a2B",
     # the convoluted one people can't decompile
-    "etherdelta": "0x8d12A197cB00D4747a1fe03395095ce2A5CC6819",
+    "etherdelta": "0x49345182D578B1b3c7Ed4B2e6eCD8Aef63DD2CA3",
     "ledger": "0xf91546835f756DA0c10cFa0CDA95b15577b84aA7",
     "solidstamp": "0x165cfb9ccf8b185e03205ab4118ea6afbdba9203",
     # a basic contract - not too complex, not too simple
