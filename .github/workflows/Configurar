@@ -1,0 +1,4 @@
+# Create the runner and start the configuration experience
+$ ./config.sh --url https://github.com/Herand19/panoramix --token A76T6JF2OSMJUC4Y5HSN6ALF5QCJG
+# Last step, run it!
+$ ./run.sh
