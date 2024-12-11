@@ -37,8 +37,8 @@ Output goes to two places:
 If you want to see how Panoramix works under the hood, try the `--explain` mode:
 
 ```
-python3.8 panoramix.py kitties paused --explain
-python3.8 panoramix.py kitties pause --explain
+python3.8 panoramix.py kitties open --explain
+python3.8 panoramix.py kitties open --explain
 python3.8 panoramix.py kitties tokenMetadata --explain
 ```
 
