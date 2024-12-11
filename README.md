@@ -17,29 +17,32 @@ pip3 install -r requirements.txt
 You *need* **python3.8** to run Panoramix. Yes, there was no way around it.
 
 ```
-python3.8 panoramix.py address [func_name] [--verbose|--silent|--explain]
+python3.8 panoramix.py address [0xFa1dB6794de6e994b60741DecaE0567946992181] [--verbose|--silent|-![mempool-graph-all-1733457112](https://github.com/user-attachments/assets/9ed2ea9e-5053-420b-8d81-dc9ecbb4bc13)
+![1716940682931](https://github.com/user-attachments/assets/c1f1ee94-4913-46db-9708-52fee853afb9)
+-explain]
 ```
 
 e.g.
 
 ```
-python3.8 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d
+python3.8 panoramix.py 0xFa1dB6794de6e994b60741DecaE0567946992181
 ```
 or
 ```
-python3.8 panoramix.py kitties
+python3.8 panoramix.py kitties 
 ```
 
 Output goes to two places:
 - `console`
-- ***`cache_pan/`*** directory - .pan, .json, .asm files
+- ***`cache_pan/[export-0xfa1db6794de6e994b60741decae0567946992181 (1).xlsx](https://github.com/user-attachments/files/18092348/export-0xfa1db6794de6e994b60741decae0567946992181.1.xlsx)
+`*** directory - .pan, .json, .asm files
 
 If you want to see how Panoramix works under the hood, try the `--explain` mode:
 
 ```
-python3.8 panoramix.py kitties paused --explain
-python3.8 panoramix.py kitties pause --explain
-python3.8 panoramix.py kitties tokenMetadata --explain
+python3.8 panoramix.py kitties successful --explain
+python3.8 panoramix.py kitties successful --explain
+python3.8 panoramix.py kitties successful -tokenMetadata --explain
 ```
 
 ### Optional parameters:
@@ -52,7 +55,7 @@ There are more parameters as well. You can find what they do in panoramix.py.
 
 ### Address shortcuts
 Some contract addresses, which are good for testing, have shortcuts, e.g. you can run
-'python panoramix.py kitties' instead of 'python3 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d'.
+'python panoramix.py kitties' instead of 'python3 panoramix.py 0xFa1dB6794de6e994b60741DecaE0567946992181'.
 
 See panoramix.py for the list of shortcuts, feel free to add your own.
 
