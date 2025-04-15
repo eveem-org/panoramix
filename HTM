@@ -1,0 +1,158 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+interface IPancakeRouter {
+    function WETH() external pure returns (address);
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint, uint, uint);
+    function swapExactETHForTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable returns (uint[] memory amounts);
+}
+
+contract HMTMining is Ownable, ReentrancyGuard {
+    using SafeMath for uint256;
+    
+    IERC20 public hmt;
+    IPancakeRouter public router;
+    address public lpToken;
+    
+    uint256 public dailyOutput = 5184 * 10**18;
+    uint256 public maxDailyOutput = 5184 * 10**18;
+    bool public miningPaused;
+    
+    uint16[14] public referRates = [2000, 1500, 1000, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500];
+    uint256 public constant MIN_TRIGGER = 0.00001 ether;
+    uint256 public constant MIN_BIND_AMOUNT = 0.001 ether;
+    
+    struct UserInfo {
+        uint256 lpAmount;
+        uint256 rewardDebt;
+        uint256 pendingReward;
+        uint256 referReward;
+        address referrer;
+        bool registered;
+    }
+    
+    mapping(address => UserInfo) public userInfo;
+    uint256 public totalLP;
+    uint256 public accRewardPerShare;
+    uint256 public lastRewardTime;
+    
+    constructor(IERC20 _hmt, IPancakeRouter _router) Ownable(msg.sender) {
+        hmt = _hmt;
+        router = _router;
+        lastRewardTime = block.timestamp;
+    }
+    
+    receive() external payable {
+        require(!miningPaused, "Mining paused");
+        require(msg.value > 0, "Must send BNB");
+        
+        // 1. 50% BNB兑换HMT
+        uint256 halfBNB = msg.value.div(2);
+        address[] memory path = new address[](2);
+        path[0] = router.WETH();
+        path[1] = address(hmt);
+        
+        uint[] memory amounts = router.swapExactETHForTokens{value: halfBNB}(
+            0, path, address(this), block.timestamp
+        );
+        
+        // 2. 添加流动性
+        uint256 tokenAmount = amounts[1];
+        (,,uint256 liquidity) = router.addLiquidityETH{value: halfBNB}(
+            address(hmt), tokenAmount, 0, 0, address(this), block.timestamp
+        );
+        
+        // 3. 更新用户LP
+        UserInfo storage user = userInfo[msg.sender];
+        user.lpAmount = user.lpAmount.add(liquidity);
+        totalLP = totalLP.add(liquidity);
+        user.rewardDebt = user.lpAmount.mul(accRewardPerShare).div(1e12);
+        
+        // 4. 更新推荐奖励
+        if (user.referrer != address(0)) {
+            _updateReferralRewards(msg.sender, liquidity);
+        }
+    }
+    
+    function _updateReferralRewards(address _user, uint256 _amount) internal {
+        address current = userInfo[_user].referrer;
+        for (uint i = 0; i < 14 && current != address(0); i++) {
+            UserInfo storage referrer = userInfo[current];
+            uint256 reward = _amount.mul(referRates[i]).div(10000);
+            referrer.referReward = referrer.referReward.add(reward);
+            current = referrer.referrer;
+        }
+    }
+    
+    function bindReferrer(address _referrer) external {
+        require(!userInfo[msg.sender].registered, "Already registered");
+        require(userInfo[_referrer].lpAmount > 0, "Referrer not active");
+        
+        userInfo[msg.sender].referrer = _referrer;
+        userInfo[msg.sender].registered = true;
+    }
+    
+    function triggerReward(address _to) external nonReentrant {
+        require(hmt.balanceOf(msg.sender) >= MIN_TRIGGER, "Amount too small");
+        
+        updatePool();
+        UserInfo storage user = userInfo[msg.sender];
+        
+        uint256 pending = user.lpAmount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt);
+        if (pending > 0) {
+            user.pendingReward = user.pendingReward.add(pending);
+        }
+        
+        uint256 total = user.pendingReward.add(user.referReward);
+        require(total > 0, "No rewards");
+        
+        user.pendingReward = 0;
+        user.referReward = 0;
+        user.rewardDebt = user.lpAmount.mul(accRewardPerShare).div(1e12);
+        
+        hmt.transfer(_to, total);
+    }
+    
+    function adminWithdrawLP(uint256 _amount) external onlyOwner {
+        IERC20(lpToken).transfer(owner(), _amount);
+    }
+    
+    function setDailyOutput(uint256 _amount) external onlyOwner {
+        require(_amount <= maxDailyOutput, "Exceeds max output");
+        dailyOutput = _amount;
+    }
+    
+    function setMiningPaused(bool _paused) external onlyOwner {
+        miningPaused = _paused;
+    }
+    
+    function updatePool() public {
+        if (block.timestamp <= lastRewardTime) return;
+        
+        uint256 timePassed = block.timestamp.sub(lastRewardTime);
+        uint256 reward = dailyOutput.mul(timePassed).div(1 days);
+        
+        if (totalLP > 0) {
+            accRewardPerShare = accRewardPerShare.add(reward.mul(1e12).div(totalLP));
+        }
+        
+        lastRewardTime = block.timestamp;
+    }
+}
