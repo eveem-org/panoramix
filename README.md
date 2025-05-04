@@ -23,7 +23,7 @@ python3.8 panoramix.py address [func_name] [--verbose|--silent|--explain]
 e.g.
 
 ```
-python3.8 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d
+python3.8 panoramix.py'''0xBbc5719EC16F32cCa9180b65dad21630C99e1eB4
 ```
 or
 ```
@@ -52,7 +52,7 @@ There are more parameters as well. You can find what they do in panoramix.py.
 
 ### Address shortcuts
 Some contract addresses, which are good for testing, have shortcuts, e.g. you can run
-'python panoramix.py kitties' instead of 'python3 panoramix.py 0x06012c8cf97bead5deae237070f9587f8e7a266d'.
+'python panoramix.py kitties' instead of 'python3 panoramix.py 0xBbc5719EC16F32cCa9180b65dad21630C99e1eB4'.
 
 See panoramix.py for the list of shortcuts, feel free to add your own.
 
