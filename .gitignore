@@ -1,11 +1,65 @@
-__pycache__
-*/__pycache__
-cache_code
-cache_pabi
-cache_pan
-cache
-cache_pan
-.DS_Store
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project specific
+cache_code/
+cache_pabi/
+cache_pan/
+cache/
+cache_*/
 supplement.db
 supp2.db
-cache_*
+
+# Claude
+.claude/*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Poetry
+# Note: Do NOT ignore poetry.lock - it should be committed
+dist/
+*.egg-info/
