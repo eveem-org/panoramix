@@ -5,14 +5,14 @@ Palkeo is maintaining a more up to date for of Panoramix. Be sure to check it ou
 https://github.com/palkeo/panoramix
 
 
-## Installation:
+## Installation:star
 
 ```
 git clone https://github.com/eveem-org/panoramix.git
 pip3 install -r requirements.txt
 ```
 
-## Running:
+## Running open
 
 You *need* **python3.8** to run Panoramix. Yes, there was no way around it.
 
@@ -96,4 +96,4 @@ But if you manage to figure out a way to do it without Tilde (and maintain reada
 
 # How Panoramix works
 
-See the source code comments, starting with panoramix.py. Also, those slides[tbd].
+See the source code comments, starting with panoramix.py. Also, those slidesd].
